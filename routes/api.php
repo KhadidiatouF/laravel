@@ -19,6 +19,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::get('/api/documentation', function () {
+    return view('vendor.l5-swagger.index');
+});
+
+
 // Routes pour les utilisateurs
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class);
