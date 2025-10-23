@@ -46,11 +46,11 @@ RUN echo "APP_NAME=Laravel" > .env && \
     echo "LOG_LEVEL=error" >> .env && \
     echo "" >> .env && \
     echo "DB_CONNECTION=pgsql" >> .env && \
-    echo "DB_HOST=\${DB_HOST}" >> .env && \
-    echo "DB_PORT=\${DB_PORT}" >> .env && \
-    echo "DB_DATABASE=\${DB_DATABASE}" >> .env && \
-    echo "DB_USERNAME=\${DB_USERNAME}" >> .env && \
-    echo "DB_PASSWORD=\${DB_PASSWORD}" >> .env && \
+    echo "DB_HOST=dpg-d3t39cndiees73d01bi0-a.oregon-postgres.render.com" >> .env && \
+    echo "DB_PORT=5432" >> .env && \
+    echo "DB_DATABASE=pgsql_415o" >> .env && \
+    echo "DB_USERNAME=postgress" >> .env && \
+    echo "DB_PASSWORD=oQVoI5XcpnGWoIRQiZxtl31hH3FR7eCT" >> .env && \
     echo "" >> .env && \
     echo "CACHE_DRIVER=file" >> .env && \
     echo "SESSION_DRIVER=file" >> .env && \
