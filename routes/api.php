@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CompteController;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,7 +27,27 @@ Route::get('/api/documentation', function () {
 });
 
 
-// Routes pour les utilisateurs
-Route::middleware('auth:sanctum')->group(function () {
+// Login (obtenir token)
+Route::post('/login', function (Request $request) {
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json(['message' => 'Identifiants incorrects'], 401);
+    }
+
+    return response()->json([
+        'token' => $user->createToken('API TOKEN')->plainTextToken
+    ]);
+});
+
+// API Version 1
+Route::prefix('v1')->middleware(['auth:sanctum', 'rating'])->group(function () {
+
+    // Routes pour les utilisateurs
     Route::apiResource('users', UserController::class);
+
+    // Routes pour les comptes
+    Route::get('comptes', [CompteController::class, 'index']);
+    Route::post('comptes', [CompteController::class, 'store'])->middleware('logging');
+    Route::get('comptes/archives', [CompteController::class, 'archives']);
 });
