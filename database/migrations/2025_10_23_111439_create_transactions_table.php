@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->uuid('compte_id');
             $table->enum('type', ['depot', 'retrait']);
             $table->decimal('montant', 15, 2);
+            $table->string('description')->nullable();
             $table->timestamp('date_transaction')->useCurrent();
             $table->timestamps();
 

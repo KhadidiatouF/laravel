@@ -24,7 +24,8 @@ class User extends Authenticatable
         'telephone',
         'adresse',
         'password',
-        'type'
+        'type',
+        'code_verification'
     ];
 
   

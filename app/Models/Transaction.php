@@ -17,7 +17,6 @@ class Transaction extends Model
         'date_transaction',
     ];
 
-   
     public function compte()
     {
         return $this->belongsTo(Compte::class);
