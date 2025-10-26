@@ -49,5 +49,8 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'rating'])->group(function () {
     // Routes pour les comptes
     Route::get('comptes', [CompteController::class, 'index']);
     Route::post('comptes', [CompteController::class, 'store'])->middleware('logging');
+    Route::get('comptes/{id}', [CompteController::class, 'show']);
+    Route::put('comptes/{id}', [CompteController::class, 'update']);
+    Route::delete('comptes/{id}', [CompteController::class, 'destroy']);
     Route::get('comptes/archives', [CompteController::class, 'archives']);
 });

@@ -14,6 +14,51 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use App\Events\CompteCreated;
 
+/**
+ * @OA\Schema(
+ *     schema="Pagination",
+ *     type="object",
+ *     title="Pagination",
+ *     description="Informations de pagination",
+ *     @OA\Property(property="current_page", type="integer", example=1),
+ *     @OA\Property(property="per_page", type="integer", example=10),
+ *     @OA\Property(property="total", type="integer", example=50),
+ *     @OA\Property(property="last_page", type="integer", example=5),
+ *     @OA\Property(property="from", type="integer", example=1),
+ *     @OA\Property(property="to", type="integer", example=10)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="Links",
+ *     type="object",
+ *     title="Links",
+ *     description="Liens de navigation",
+ *     @OA\Property(property="first", type="string", example="http://api.banque.example.com/api/v1/comptes?page=1"),
+ *     @OA\Property(property="last", type="string", example="http://api.banque.example.com/api/v1/comptes?page=5"),
+ *     @OA\Property(property="prev", type="string", nullable=true, example=null),
+ *     @OA\Property(property="next", type="string", example="http://api.banque.example.com/api/v1/comptes?page=2")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="Compte",
+ *     type="object",
+ *     title="Compte",
+ *     description="Objet représentant un compte bancaire",
+ *     @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+ *     @OA\Property(property="numeroCompte", type="string", example="C-20251025-ABCD"),
+ *     @OA\Property(property="titulaire", type="string", example="Mamadou Diallo"),
+ *     @OA\Property(property="type", type="string", enum={"courant", "epargne", "bloqué", "cheque"}, example="cheque"),
+ *     @OA\Property(property="solde", type="number", format="float", example=500000),
+ *     @OA\Property(property="devise", type="string", enum={"FCFA", "XOF", "EUR", "USD"}, example="FCFA"),
+ *     @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
+ *     @OA\Property(property="statut", type="string", enum={"actif", "inactif", "fermé"}, example="actif"),
+ *     @OA\Property(property="motifBlocage", type="string", nullable=true, example=null),
+ *     @OA\Property(property="metadata", type="object",
+ *         @OA\Property(property="derniereModification", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
+ *         @OA\Property(property="version", type="integer", example=1)
+ *     )
+ * )
+ */
 class CompteController extends Controller
 {
     use ApiResponseTrait;
@@ -45,7 +90,7 @@ class CompteController extends Controller
      *         in="query",
      *         description="Filtrer par type",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"courant", "epargne", "bloqué"})
+     *         @OA\Schema(type="string", enum={"courant", "epargne", "bloqué", "cheque"})
      *     ),
      *     @OA\Parameter(
      *         name="statut",
@@ -98,7 +143,7 @@ class CompteController extends Controller
         $validated = $request->validate([
             'page' => 'integer|min:1',
             'limit' => 'integer|min:1|max:100',
-            'type' => ['nullable', Rule::in(['courant', 'epargne', 'bloqué'])],
+            'type' => ['nullable', Rule::in(['courant', 'epargne', 'bloqué', 'cheque'])],
             'statut' => ['nullable', Rule::in(['actif', 'inactif', 'fermé'])],
             'search' => 'nullable|string|max:255',
             'sort' => ['nullable', Rule::in(['dateCreation', 'solde', 'titulaire'])],
@@ -311,6 +356,157 @@ class CompteController extends Controller
             new CompteResource($compte),
             'Compte créé avec succès',
             201
+        );
+    }
+
+    /**
+     * Afficher un compte spécifique
+     *
+     * @OA\Get(
+     *     path="/api/v1/comptes/{id}",
+     *     summary="Afficher un compte spécifique",
+     *     tags={"Comptes"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Détails du compte",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Compte non trouvé"),
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé")
+     * )
+     */
+    public function show(string $id)
+    {
+        $user = Auth::user();
+        $compte = Compte::with('client')->findOrFail($id);
+
+        // Vérifier les permissions
+        if ($user->type === 'client' && $compte->titulaire !== $user->id) {
+            return $this->errorResponse('Accès refusé à ce compte.', 403);
+        }
+
+        return $this->successResponse(new CompteResource($compte));
+    }
+
+    /**
+     * Mettre à jour un compte
+     *
+     * @OA\Put(
+     *     path="/api/v1/comptes/{id}",
+     *     summary="Mettre à jour un compte",
+     *     tags={"Comptes"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="type", type="string", enum={"courant", "epargne", "bloqué", "cheque"}),
+     *             @OA\Property(property="statut", type="string", enum={"actif", "inactif", "fermé"})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte mis à jour avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte mis à jour avec succès"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Compte non trouvé"),
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé")
+     * )
+     */
+    public function update(Request $request, string $id)
+    {
+        $user = Auth::user();
+
+        // Vérifier les permissions (seulement admin peut modifier)
+        if ($user->type !== 'admin') {
+            return $this->errorResponse('Seul un administrateur peut modifier un compte.', 403);
+        }
+
+        $compte = Compte::findOrFail($id);
+
+        $validated = $request->validate([
+            'type' => ['sometimes', 'in:courant,epargne,bloqué,cheque'],
+            'statut' => ['sometimes', 'in:actif,inactif,fermé'],
+        ]);
+
+        $compte->update($validated);
+
+        return $this->successResponse(
+            new CompteResource($compte),
+            'Compte mis à jour avec succès'
+        );
+    }
+
+    /**
+     * Supprimer un compte (Archivage)
+     *
+     * @OA\Delete(
+     *     path="/api/v1/comptes/{id}",
+     *     summary="Supprimer un compte (Archivage)",
+     *     tags={"Comptes"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte archivé avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte archivé avec succès")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Compte non trouvé"),
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé")
+     * )
+     */
+    public function destroy(string $id)
+    {
+        $user = Auth::user();
+
+        // Vérifier les permissions (seulement admin peut supprimer)
+        if ($user->type !== 'admin') {
+            return $this->errorResponse('Seul un administrateur peut archiver un compte.', 403);
+        }
+
+        $compte = Compte::findOrFail($id);
+
+        // Archiver le compte (soft delete)
+        $compte->update(['statut' => 'fermé']);
+
+        return $this->successResponse(
+            message: 'Compte archivé avec succès'
         );
     }
 }
