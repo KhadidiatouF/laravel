@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Hash;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
@@ -32,7 +32,7 @@ Route::get('/api/documentation', function () {
 Route::post('/login', [TestController::class, 'login']);
 
 // API Version 1
-Route::prefix('v1')->middleware(['auth:sanctum', 'rating'])->group(function () {
+Route::prefix('v1')->middleware(['auth:api', 'rating'])->group(function () {
 
     // Routes pour les utilisateurs
     Route::get('users', [UserController::class, 'index']);

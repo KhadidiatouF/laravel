@@ -62,7 +62,7 @@ class TestController extends Controller
         }
 
         return response()->json([
-            'token' => $user->createToken('API TOKEN')->plainTextToken
+            'token' => $user->createToken('API TOKEN')->accessToken
         ]);
     }
 }
