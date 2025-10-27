@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompteController;
+use App\Http\Controllers\TestController;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -28,17 +29,7 @@ Route::get('/api/documentation', function () {
 
 
 // Login (obtenir token)
-Route::post('/login', function (Request $request) {
-    $user = User::where('email', $request->email)->first();
-
-    if (!$user || !Hash::check($request->password, $user->password)) {
-        return response()->json(['message' => 'Identifiants incorrects'], 401);
-    }
-
-    return response()->json([
-        'token' => $user->createToken('API TOKEN')->plainTextToken
-    ]);
-});
+Route::post('/login', [TestController::class, 'login']);
 
 // API Version 1
 Route::prefix('v1')->middleware(['auth:sanctum', 'rating'])->group(function () {

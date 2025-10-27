@@ -1,10 +1,16 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "Exemple API",
-        "description": "Documentation API Laravel",
+        "title": "Banque API",
+        "description": "API de gestion bancaire avec authentification Sanctum",
         "version": "1.0.0"
     },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "Serveur de développement"
+        }
+    ],
     "paths": {
         "/api/v1/comptes": {
             "get": {
@@ -719,13 +725,72 @@
                 ]
             }
         },
-        "/api/test": {
-            "get": {
-                "summary": "Test de route",
-                "operationId": "7c2e6b5602b42636e41cc7228a9d8765",
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Authentification utilisateur",
+                "description": "Permet à un utilisateur de se connecter et d'obtenir un token d'accès",
+                "operationId": "login",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Tout fonctionne"
+                        "description": "Connexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string",
+                                            "example": "1|abc123def456..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Identifiants incorrects",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Identifiants incorrects"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1227,6 +1292,10 @@
         {
             "name": "Comptes",
             "description": "Comptes"
+        },
+        {
+            "name": "Authentification",
+            "description": "Authentification"
         },
         {
             "name": "Users",
