@@ -44,13 +44,23 @@ Route::post('/login', function (Request $request) {
 Route::prefix('v1')->middleware(['auth:sanctum', 'rating'])->group(function () {
 
     // Routes pour les utilisateurs
-    Route::apiResource('users', UserController::class);
+    Route::get('users', [UserController::class, 'index']);
+    Route::post('users', [UserController::class, 'store']);
+    Route::get('users/{id}', [UserController::class, 'show']);
+    Route::put('users/{id}', [UserController::class, 'update']);
+    Route::delete('users/{id}', [UserController::class, 'destroy']);
 
     // Routes pour les comptes
     Route::get('comptes', [CompteController::class, 'index']);
     Route::post('comptes', [CompteController::class, 'store'])->middleware('logging');
+
+    // Routes spécifiques (sans paramètres - doivent être avant les routes paramétrées)
+    Route::get('comptes/archives', [CompteController::class, 'archives']);
+
+    // Routes paramétrées (avec {id} ou {compteId})
     Route::get('comptes/{id}', [CompteController::class, 'show']);
     Route::put('comptes/{id}', [CompteController::class, 'update']);
     Route::delete('comptes/{id}', [CompteController::class, 'destroy']);
-    Route::get('comptes/archives', [CompteController::class, 'archives']);
+    Route::delete('comptes/archives/{id}', [CompteController::class, 'supprimerDefinitivement']);
+    Route::post('comptes/{compteId}/bloquer', [CompteController::class, 'bloquer']);
 });

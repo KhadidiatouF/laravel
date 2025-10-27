@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Compte;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -26,6 +28,7 @@ use Illuminate\Support\Facades\Hash;
  */
 class UserController extends Controller
 {
+    use ApiResponseTrait;
     /**
      * @OA\Get(
      *     path="/api/users",
@@ -183,7 +186,7 @@ class UserController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/users/{id}",
+     *     path="/api/v1/users/{id}",
      *     summary="Supprimer un utilisateur",
      *     tags={"Users"},
      *     security={{"sanctum":{}}},
@@ -195,18 +198,43 @@ class UserController extends Controller
      *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\Response(
-     *         response=204,
-     *         description="Utilisateur supprimé"
+     *         response=200,
+     *         description="Utilisateur supprimé avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Utilisateur supprimé avec succès")
+     *         )
      *     ),
      *     @OA\Response(response=404, description="Utilisateur non trouvé"),
-     *     @OA\Response(response=401, description="Non autorisé")
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé")
      * )
      */
     public function destroy($id)
     {
+        $currentUser = auth()->user();
+
+        // Vérifier les permissions (seulement admin peut supprimer)
+        if ($currentUser->type !== 'admin') {
+            return $this->errorResponse('Seul un administrateur peut supprimer un utilisateur.', 403);
+        }
+
         $user = User::findOrFail($id);
+
+        // Empêcher la suppression de son propre compte
+        if ($user->id === $currentUser->id) {
+            return $this->errorResponse('Vous ne pouvez pas supprimer votre propre compte.', 403);
+        }
+
+        // Supprimer tous les comptes associés à cet utilisateur
+        $user->comptes()->delete();
+
+        // Supprimer l'utilisateur
         $user->delete();
 
-        return response()->json(null, 204);
+        return $this->successResponse(
+            message: 'Utilisateur supprimé avec succès'
+        );
     }
 }

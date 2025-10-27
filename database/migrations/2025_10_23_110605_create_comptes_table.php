@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->uuid('titulaire');
             $table->enum('type', ['courant', 'epargne', 'bloqué', 'cheque']);
             $table->date('date_creation')->useCurrent();
-            $table->enum('statut', ['actif', 'inactif', 'fermé'])->default('actif');
+            $table->enum('statut', ['actif', 'inactif', 'fermé', 'bloqué'])->default('actif');
             $table->timestamps();
 
             $table->foreign('titulaire')->references('id')

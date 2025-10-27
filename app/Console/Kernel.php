@@ -4,6 +4,8 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Jobs\ArchiveExpiredBlockedAccounts;
+use App\Jobs\UnblockExpiredAccounts;
 
 class Kernel extends ConsoleKernel
 {
@@ -12,7 +14,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Archiver les comptes bloqués expirés toutes les heures
+        $schedule->job(new ArchiveExpiredBlockedAccounts)->hourly();
+
+        // Débloquer les comptes dont le blocage est terminé toutes les heures
+        $schedule->job(new UnblockExpiredAccounts)->hourly();
     }
 
     /**

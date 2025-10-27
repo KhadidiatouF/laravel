@@ -17,10 +17,14 @@ class Compte extends Model
         'type',
         'date_creation',
         'statut',
+        'date_debut_bloquage',
+        'date_fin_bloquage',
     ];
 
     protected $casts = [
         'date_creation' => 'date',
+        'date_debut_bloquage' => 'datetime',
+        'date_fin_bloquage' => 'datetime',
     ];
 
     public function client()

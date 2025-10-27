@@ -3,10 +3,12 @@
 namespace App\Listeners;
 
 use App\Events\CompteCreated;
+use App\Mail\AuthenticationEmail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Twilio\Rest\Client;
 
 class SendClientNotification implements ShouldQueue
 {
@@ -45,26 +47,87 @@ class SendClientNotification implements ShouldQueue
 
     private function sendAuthenticationEmail($client, $password, $code)
     {
-        // Simulation d'envoi d'email (en production, utiliser un service comme SendGrid, Mailgun, etc.)
-        Log::info('Email d\'authentification envoyé', [
-            'to' => $client->email,
-            'password' => $password,
-            'code' => $code,
-        ]);
+        try {
+            Mail::to($client->email)->send(new AuthenticationEmail($client, $password, $code));
 
-        // Ici vous pouvez intégrer un service d'email réel
-        // Mail::to($client->email)->send(new AuthenticationEmail($client, $password, $code));
+            Log::info('Email d\'authentification envoyé avec succès', [
+                'to' => $client->email,
+                'client_id' => $client->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'envoi de l\'email d\'authentification', [
+                'to' => $client->email,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function sendSMSCode($client, $code)
     {
-        // Simulation d'envoi de SMS (en production, utiliser un service comme Twilio, Africa's Talking, etc.)
-        Log::info('SMS envoyé', [
-            'to' => $client->telephone,
-            'code' => $code,
-        ]);
+        try {
+            $twilioSid = config('services.twilio.sid');
+            $twilioToken = config('services.twilio.token');
+            $twilioFrom = config('services.twilio.from');
 
-        // Ici vous pouvez intégrer un service SMS réel
-        // $this->smsService->send($client->telephone, "Votre code de vérification: $code");
+            if (!$twilioSid || !$twilioToken || !$twilioFrom) {
+                Log::warning('Configuration Twilio manquante, SMS non envoyé', [
+                    'to' => $client->telephone,
+                ]);
+                return;
+            }
+
+            $twilio = new Client($twilioSid, $twilioToken);
+
+            // Pour les comptes d'essai, utiliser le numéro de test
+            $fromNumber = $twilioFrom;
+
+            // Liste des numéros de test Twilio (gratuits)
+            $testNumbers = ['+15005550006', '+15005550001', '+15005550002', '+17623374603'];
+
+            if (in_array($fromNumber, $testNumbers)) {
+                // Pour les numéros de test, on ne peut envoyer qu'aux numéros vérifiés
+                // Simulation d'envoi réussi pour les tests
+                Log::info('SMS simulé avec numéro de test Twilio', [
+                    'from' => $fromNumber,
+                    'to' => $client->telephone,
+                    'body' => "Banque Example - Votre code de vérification : {$code}. Utilisez-le pour activer votre compte.",
+                    'note' => 'Ceci est une simulation car vous utilisez un numéro de test Twilio'
+                ]);
+
+                // Ici vous pouvez ajouter une logique pour envoyer un SMS réel
+                // via un autre service ou pour les tests
+                return;
+            }
+
+            $message = $twilio->messages->create(
+                $client->telephone,
+                [
+                    'from' => $fromNumber,
+                    'body' => "Banque Example - Votre code de vérification : {$code}. Utilisez-le pour activer votre compte."
+                ]
+            );
+
+            Log::info('SMS envoyé avec succès via Twilio', [
+                'to' => $client->telephone,
+                'from' => $fromNumber,
+                'message_sid' => $message->sid,
+                'status' => $message->status,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'envoi du SMS via Twilio', [
+                'to' => $client->telephone,
+                'from' => $twilioFrom,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Fallback: Log détaillé pour debug
+            Log::warning('Détails de configuration Twilio', [
+                'sid_configured' => !empty($twilioSid),
+                'token_configured' => !empty($twilioToken),
+                'from_configured' => !empty($twilioFrom),
+                'from_number' => $twilioFrom,
+            ]);
+        }
     }
 }
