@@ -576,6 +576,149 @@
                 ]
             }
         },
+        "/api/v1/comptes/{compteId}/bloquer": {
+            "post": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Bloquer un compte temporairement",
+                "description": "Bloquer un compte temporairement",
+                "operationId": "fe2f6141c450b39f7be6854c72d7fb95",
+                "parameters": [
+                    {
+                        "name": "compteId",
+                        "in": "path",
+                        "description": "ID du compte à bloquer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dateFinBlocage"
+                                ],
+                                "properties": {
+                                    "dateFinBlocage": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-11-01T00:00:00Z"
+                                    },
+                                    "motif": {
+                                        "type": "string",
+                                        "example": "Suspicion d'activité frauduleuse"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Compte bloqué avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte bloqué avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Compte"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Compte non trouvé"
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/comptes/archives/{id}": {
+            "delete": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Supprimer définitivement un compte archivé",
+                "description": "Supprimer définitivement un compte archivé",
+                "operationId": "42d90e9449d0a04f95c2126965507765",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du compte archivé à supprimer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte supprimé définitivement avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte supprimé définitivement avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Compte non trouvé"
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/test": {
             "get": {
                 "summary": "Test de route",
@@ -821,13 +964,15 @@
                         "sanctum": []
                     }
                 ]
-            },
+            }
+        },
+        "/api/v1/users/{id}": {
             "delete": {
                 "tags": [
                     "Users"
                 ],
                 "summary": "Supprimer un utilisateur",
-                "operationId": "fa56cffde745d3f152f95cbacd936c0b",
+                "operationId": "c30c64b8b7730b65c7714c9af4a6f5fa",
                 "parameters": [
                     {
                         "name": "id",
@@ -841,14 +986,34 @@
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "Utilisateur supprimé"
+                    "200": {
+                        "description": "Utilisateur supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "Utilisateur non trouvé"
                     },
                     "401": {
                         "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
                     }
                 },
                 "security": [
@@ -1048,6 +1213,14 @@
                 },
                 "type": "object"
             }
+        },
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Enter token in format (Bearer <token>)",
+                "name": "Authorization",
+                "in": "header"
+            }
         }
     },
     "tags": [
@@ -1058,6 +1231,11 @@
         {
             "name": "Users",
             "description": "Users"
+        }
+    ],
+    "security": [
+        {
+            "sanctum": []
         }
     ]
 }
