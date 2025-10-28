@@ -38,9 +38,9 @@ RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
 # Créer un fichier .env minimal pour le build
 RUN echo "APP_NAME=Laravel" > .env && \
     echo "APP_ENV=production" >> .env && \
-    echo "APP_KEY=" >> .env && \
+    echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env && \
     echo "APP_DEBUG=false" >> .env && \
-    echo "APP_URL=http://localhost" >> .env && \
+    echo "APP_URL=https://khadidiatou-fall-api-laravel-0luq.onrender.com" >> .env && \
     echo "" >> .env && \
     echo "LOG_CHANNEL=stack" >> .env && \
     echo "LOG_LEVEL=error" >> .env && \
