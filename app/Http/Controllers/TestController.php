@@ -72,16 +72,24 @@ class TestController extends Controller
         try {
             $user = User::where('email', $request->email)->first();
 
-            if (!$user || !Hash::check($request->password, $user->password)) {
-                return response()->json(['message' => 'Identifiants incorrects'], 401);
+            if (!$user) {
+                return response()->json(['message' => 'Utilisateur non trouvé'], 401);
             }
 
+            if (!Hash::check($request->password, $user->password)) {
+                return response()->json(['message' => 'Mot de passe incorrect'], 401);
+            }
+
+            $token = $user->createToken('API TOKEN')->accessToken;
+
             return response()->json([
-                'token' => $user->createToken('API TOKEN')->accessToken
+                'token' => $token,
+                'user' => $user
             ]);
         } catch (\Exception $e) {
             Log::error('Login error: ' . $e->getMessage());
-            return response()->json(['message' => 'Erreur serveur'], 500);
+            Log::error('Login error trace: ' . $e->getTraceAsString());
+            return response()->json(['message' => 'Erreur serveur: ' . $e->getMessage()], 500);
         }
     }
 }
