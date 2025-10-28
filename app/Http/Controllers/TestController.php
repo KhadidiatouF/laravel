@@ -81,8 +81,8 @@ class TestController extends Controller
                 return response()->json(['message' => 'Mot de passe incorrect'], 401);
             }
 
-            // Générer un token simple JWT-like
-            $token = Str::random(60);
+            // Générer le token avec Passport
+            $token = $user->createToken('API TOKEN')->accessToken;
 
             return response()->json([
                 'token' => $token,

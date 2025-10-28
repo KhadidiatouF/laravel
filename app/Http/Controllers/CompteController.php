@@ -153,7 +153,7 @@ class CompteController extends Controller
         $query = Compte::with('client');
 
         // Si c'est un client, filtrer par ses comptes
-        if ($user->type === 'client') {
+        if ($user && $user->type === 'client') {
             $query->where('titulaire', $user->id);
         }
 
@@ -394,6 +394,7 @@ class CompteController extends Controller
     public function show(string $id)
     {
         $user = Auth::user();
+
         $compte = Compte::with('client')->findOrFail($id);
 
         // Vérifier les permissions
