@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * @OA\Info(
@@ -80,8 +81,8 @@ class TestController extends Controller
                 return response()->json(['message' => 'Mot de passe incorrect'], 401);
             }
 
-            // Générer le token
-            $token = $user->createToken('API TOKEN')->accessToken;
+            // Générer un token simple JWT-like
+            $token = Str::random(60);
 
             return response()->json([
                 'token' => $token,

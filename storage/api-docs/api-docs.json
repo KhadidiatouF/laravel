@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "https://khadidiatou-fall-api-laravel-0luq.onrender.com",
+            "url": "https://khadidiatou-fall-api-laravel-0luq.onrender.com/api",
             "description": "Serveur de production"
         },
         {
