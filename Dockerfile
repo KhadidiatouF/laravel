@@ -6,7 +6,7 @@ WORKDIR /app
 # Copier les fichiers de dépendances
 COPY composer.json composer.lock ./
 
-# Installer les dépendances PHP sans scripts post-install
+# Installer les dépendances PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts
 
 # Étape 2: Image finale pour l'application
@@ -35,44 +35,21 @@ RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
     && chown -R laravel:laravel /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
-# Créer un fichier .env minimal pour le build
-RUN echo "APP_NAME=Laravel" > .env && \
-    echo "APP_ENV=production" >> .env && \
-    echo "APP_KEY=base64:your32characterlongrandomstringhere123" >> .env && \
-    echo "APP_DEBUG=false" >> .env && \
-    echo "APP_URL=https://khadidiatou-fall-api-laravel-0luq.onrender.com" >> .env && \
-    echo "" >> .env && \
-    echo "LOG_CHANNEL=stack" >> .env && \
-    echo "LOG_LEVEL=error" >> .env && \
-    echo "" >> .env && \
-    echo "DB_CONNECTION=pgsql" >> .env && \
-    echo "DB_HOST=dpg-d3t39cndiees73d01bi0-a.oregon-postgres.render.com" >> .env && \
-    echo "DB_PORT=5432" >> .env && \
-    echo "DB_DATABASE=pgsql_415o" >> .env && \
-    echo "DB_USERNAME=postgress" >> .env && \
-    echo "DB_PASSWORD=oQVoI5XcpnGWoIRQiZxtl31hH3FR7eCT" >> .env && \
-    echo "" >> .env && \
-    echo "CACHE_DRIVER=file" >> .env && \
-    echo "SESSION_DRIVER=file" >> .env && \
-    echo "QUEUE_CONNECTION=sync" >> .env
-
-# Changer les permissions du fichier .env pour l'utilisateur laravel
+# Copier le fichier .env propre
+COPY .env .env
 RUN chown laravel:laravel .env
 
 # Générer la clé d'application et optimiser
 USER laravel
-RUN php artisan key:generate --force && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
+RUN php artisan key:generate --force \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 USER root
 
-# Copier le script d'entrée
+# Copier le script d'entrée (optionnel)
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# Passer à l'utilisateur non-root
-USER laravel
 
 # Exposer le port 8000
 EXPOSE 8000
