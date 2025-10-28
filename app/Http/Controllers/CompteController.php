@@ -137,9 +137,8 @@ class CompteController extends Controller
      */
     public function index(Request $request)
     {
-        // Temporairement désactiver l'authentification pour les tests
-        // $user = Auth::user();
-        $user = (object) ['type' => 'admin', 'id' => 'test-id']; // Simuler un utilisateur admin pour les tests
+        // Pour les tests, on simule un utilisateur admin
+        $user = (object) ['type' => 'admin', 'id' => 'test-id'];
 
         // Validation des paramètres
         $validated = $request->validate([

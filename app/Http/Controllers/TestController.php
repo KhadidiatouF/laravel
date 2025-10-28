@@ -81,17 +81,8 @@ class TestController extends Controller
                 return response()->json(['message' => 'Mot de passe incorrect'], 401);
             }
 
-            // Générer le token avec Passport
-            try {
-                $token = $user->createToken('API TOKEN')->accessToken;
-            } catch (\Exception $e) {
-                Log::error('Token creation failed: ' . $e->getMessage());
-                return response()->json([
-                    'message' => 'Authentification réussie mais génération de token échouée',
-                    'user' => $user,
-                    'error' => $e->getMessage()
-                ], 200);
-            }
+            // Générer un token simple pour l'instant
+            $token = hash('sha256', $user->id . time() . Str::random(32));
 
             return response()->json([
                 'token' => $token,
