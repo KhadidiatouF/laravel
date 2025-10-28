@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Hash;
  * )
  *
  *   @OA\Server(
- *     url="https://khadidiatou-fall-api-laravel-0luq.onrender.com/",
+ *     url="https://khadidiatou-fall-api-laravel-0luq.onrender.com",
  *     description="Serveur de production"
  * )
  *
