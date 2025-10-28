@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
  * )
  *
  *   @OA\Server(
- *     url="https://khadidiatou-fall-api-laravel-0luq.onrender.com/api",
+ *     url="https://khadidiatou-fall-api-laravel-0luq.onrender.com",
  *     description="Serveur de production"
  * )
  *
