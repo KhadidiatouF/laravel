@@ -54,7 +54,10 @@ RUN echo "APP_NAME=Laravel" > .env && \
     echo "" >> .env && \
     echo "CACHE_DRIVER=file" >> .env && \
     echo "SESSION_DRIVER=file" >> .env && \
-    echo "QUEUE_CONNECTION=sync" >> .env
+    echo "QUEUE_CONNECTION=sync" >> .env && \
+    echo "" >> .env && \
+    echo "PASSPORT_PERSONAL_ACCESS_CLIENT_ID=1" >> .env && \
+    echo "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=secret123" >> .env
 
 RUN chown laravel:laravel .env
 
