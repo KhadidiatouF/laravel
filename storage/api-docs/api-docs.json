@@ -2,10 +2,14 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Banque API",
-        "description": "API de gestion bancaire avec authentification Sanctum",
+        "description": "API de gestion bancaire avec authentification Passport",
         "version": "1.0.0"
     },
     "servers": [
+        {
+            "url": "https://khadidiatou-fall-api-laravel-0luq.onrender.com/api/documentation",
+            "description": "Serveur de production"
+        },
         {
             "url": "http://127.0.0.1:8000",
             "description": "Serveur de développement"
@@ -146,7 +150,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             },
@@ -376,7 +380,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -577,7 +581,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -662,7 +666,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -720,7 +724,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -768,7 +772,7 @@
                                     "properties": {
                                         "token": {
                                             "type": "string",
-                                            "example": "1|abc123def456..."
+                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
                                         }
                                     },
                                     "type": "object"
@@ -822,7 +826,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             },
@@ -898,7 +902,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -942,7 +946,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             },
@@ -1026,7 +1030,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -1083,7 +1087,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -1280,6 +1284,12 @@
             }
         },
         "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Entrez le token Bearer obtenu via /api/login",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            },
             "sanctum": {
                 "type": "apiKey",
                 "description": "Enter token in format (Bearer <token>)",

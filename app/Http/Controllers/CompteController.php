@@ -70,7 +70,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes",
      *     summary="Lister les comptes",
      *     tags={"Comptes"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
@@ -202,7 +202,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes/archives",
      *     summary="Lister les comptes archivés",
      *     tags={"Comptes"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
@@ -472,7 +472,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes/{id}",
      *     summary="Supprimer un compte (Archivage)",
      *     tags={"Comptes"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -520,7 +520,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes/{compteId}/bloquer",
      *     summary="Bloquer un compte temporairement",
      *     tags={"Comptes"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="compteId",
      *         in="path",
@@ -587,7 +587,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes/archives/{id}",
      *     summary="Supprimer définitivement un compte archivé",
      *     tags={"Comptes"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",

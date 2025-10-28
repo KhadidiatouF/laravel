@@ -34,7 +34,7 @@ class UserController extends Controller
      *     path="/api/users",
      *     summary="Lister tous les utilisateurs",
      *     tags={"Users"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
      *         description="Liste des utilisateurs",
@@ -56,7 +56,7 @@ class UserController extends Controller
      *     path="/api/users",
      *     summary="Créer un nouvel utilisateur",
      *     tags={"Users"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -103,7 +103,7 @@ class UserController extends Controller
      *     path="/api/users/{id}",
      *     summary="Afficher un utilisateur spécifique",
      *     tags={"Users"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -131,7 +131,7 @@ class UserController extends Controller
      *     path="/api/users/{id}",
      *     summary="Mettre à jour un utilisateur",
      *     tags={"Users"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -189,7 +189,7 @@ class UserController extends Controller
      *     path="/api/v1/users/{id}",
      *     summary="Supprimer un utilisateur",
      *     tags={"Users"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",

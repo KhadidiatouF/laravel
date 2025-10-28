@@ -10,12 +10,25 @@ use Illuminate\Support\Facades\Hash;
  * @OA\Info(
  *     title="Banque API",
  *     version="1.0.0",
- *     description="API de gestion bancaire avec authentification Sanctum"
+ *     description="API de gestion bancaire avec authentification Passport"
+ * )
+ *
+ *   @OA\Server(
+ *     url="https://khadidiatou-fall-api-laravel-0luq.onrender.com/api/documentation",
+ *     description="Serveur de production"
  * )
  *
  * @OA\Server(
  *     url="http://127.0.0.1:8000",
  *     description="Serveur de développement"
+ * )
+ *
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT",
+ *     description="Entrez le token Bearer obtenu via /api/login"
  * )
  */
 class TestController extends Controller
@@ -35,12 +48,12 @@ class TestController extends Controller
      *             @OA\Property(property="password", type="string", format="password", example="password")
      *         )
      *     ),
-     *     @OA\Response(
+     * @OA\Response(
      *         response=200,
      *         description="Connexion réussie",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="token", type="string", example="1|abc123def456...")
+     *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...")
      *         )
      *     ),
      *     @OA\Response(
@@ -62,7 +75,7 @@ class TestController extends Controller
         }
 
         return response()->json([
-            'token' => $user->createToken('API TOKEN')->plainTextToken
+            'token' => $user->createToken('API TOKEN')->accessToken
         ]);
     }
 }
