@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Info(
@@ -68,14 +69,19 @@ class TestController extends Controller
      */
     public function login(Request $request)
     {
-        $user = User::where('email', $request->email)->first();
+        try {
+            $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Identifiants incorrects'], 401);
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return response()->json(['message' => 'Identifiants incorrects'], 401);
+            }
+
+            return response()->json([
+                'token' => $user->createToken('API TOKEN')->accessToken
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage());
+            return response()->json(['message' => 'Erreur serveur'], 500);
         }
-
-        return response()->json([
-            'token' => $user->createToken('API TOKEN')->accessToken
-        ]);
     }
 }
