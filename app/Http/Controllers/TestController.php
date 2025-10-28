@@ -70,7 +70,6 @@ class TestController extends Controller
     public function login(Request $request)
     {
         try {
-            // Test simple sans Passport pour diagnostiquer
             $user = User::where('email', $request->email)->first();
 
             if (!$user) {
@@ -81,9 +80,27 @@ class TestController extends Controller
                 return response()->json(['message' => 'Mot de passe incorrect'], 401);
             }
 
-            // Retourner une réponse simple sans token pour tester
+            // Générer le token avec gestion d'erreur
+            try {
+                $token = $user->createToken('API TOKEN')->accessToken;
+            } catch (\Exception $tokenException) {
+                Log::error('Token generation error: ' . $tokenException->getMessage());
+                // Retourner une réponse sans token si Passport échoue
+                return response()->json([
+                    'message' => 'Connexion réussie (sans token)',
+                    'user' => [
+                        'id' => $user->id,
+                        'email' => $user->email,
+                        'nom' => $user->nom,
+                        'prenom' => $user->prenom,
+                        'type' => $user->type
+                    ],
+                    'warning' => 'Token generation failed'
+                ]);
+            }
+
             return response()->json([
-                'message' => 'Connexion réussie',
+                'token' => $token,
                 'user' => [
                     'id' => $user->id,
                     'email' => $user->email,
