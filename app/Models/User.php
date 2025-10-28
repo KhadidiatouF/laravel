@@ -40,6 +40,10 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
      public function isAdmin(): bool {
         return $this->type === 'admin';
     }

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
  * @OA\Info(
  *     title="Banque API",
  *     version="1.0.0",
- *     description="API de gestion bancaire avec authentification Sanctum"
+ *     description="API de gestion bancaire avec authentification Passport"
  * )
  *
  * @OA\Server(
@@ -35,12 +35,12 @@ class TestController extends Controller
      *             @OA\Property(property="password", type="string", format="password", example="password")
      *         )
      *     ),
-     *     @OA\Response(
+     * @OA\Response(
      *         response=200,
      *         description="Connexion réussie",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="token", type="string", example="1|abc123def456...")
+     *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...")
      *         )
      *     ),
      *     @OA\Response(
