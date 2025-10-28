@@ -11,8 +11,7 @@ echo "Database is up - executing migrations"
 php artisan migrate --force
 
 echo "Installing Passport keys"
-php artisan passport:keys --force
-php artisan passport:client --personal --no-interaction
+php artisan passport:install --force
 
 echo "Seeding database"
 php artisan db:seed --force
