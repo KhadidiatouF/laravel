@@ -204,7 +204,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes/archives",
      *     summary="Lister les comptes archivés",
      *     tags={"Comptes"},
-     *     security={{"bearerAuth":{}}},
+     *     security={},
      *     @OA\Parameter(
      *         name="page",
      *         in="query",

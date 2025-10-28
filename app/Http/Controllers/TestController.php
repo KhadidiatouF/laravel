@@ -30,7 +30,7 @@ use Illuminate\Support\Str;
  *     type="http",
  *     scheme="bearer",
  *     bearerFormat="JWT",
- *     description="Entrez le token Bearer obtenu via /api/login"
+ *     description="Authentification désactivée pour les tests"
  * )
  */
 class TestController extends Controller

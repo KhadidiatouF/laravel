@@ -32,7 +32,7 @@ Route::get('/api/documentation', function () {
 Route::post('/login', [TestController::class, 'login']);
 
 // API Version 1
-Route::prefix('v1')->middleware(['auth:api', 'rating'])->group(function () {
+Route::prefix('v1')->middleware(['rating'])->group(function () {
 
     // Routes pour les utilisateurs
     Route::get('users', [UserController::class, 'index']);
