@@ -12,7 +12,12 @@ use Illuminate\Support\Facades\Hash;
  *     version="1.0.0",
  *     description="API de gestion bancaire avec authentification Passport"
  * )
+ * * @OA\Server(
+ *     url="http://khadidiatou-fall-api-laravel-0luq.onrender.com",
+ *     description="Serveur de production"
+ * )
  *
+ * 
  * @OA\Server(
  *     url="http://127.0.0.1:8000",
  *     description="Serveur de développement"

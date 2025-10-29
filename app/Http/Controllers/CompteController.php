@@ -150,7 +150,7 @@ class CompteController extends Controller
             'order' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
 
-        $query = Compte::with('client');
+        $query = Compte::with('client')->where('statut', 'actif');
 
         // Si c'est un client, filtrer par ses comptes
         if ($user->type === 'client') {
