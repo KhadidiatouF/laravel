@@ -93,6 +93,17 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'neon' => [
+        'driver' => 'pgsql',
+        'host' => env('DB_NEON_HOST'),
+        'port' => env('DB_NEON_PORT'),
+        'database' => env('DB_NEON_DATABASE'),
+        'username' => env('DB_NEON_USERNAME'),
+        'password' => env('DB_NEON_PASSWORD'),
+        'sslmode' => env('DB_NEON_SSLMODE', 'require'),
+        ],
+
+
     ],
 
     /*

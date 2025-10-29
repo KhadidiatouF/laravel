@@ -53,6 +53,12 @@ use App\Events\CompteCreated;
  *     @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
  *     @OA\Property(property="statut", type="string", enum={"actif", "inactif", "bloqué"}, example="actif"),
  *     @OA\Property(property="motifBlocage", type="string", nullable=true, example=null),
+ *     @OA\Property(property="informationsBlocage", type="object", nullable=true,
+ *         description="Informations de blocage pour les comptes épargne bloqués",
+ *         @OA\Property(property="dateDebutBlocage", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
+ *         @OA\Property(property="dateFinBlocage", type="string", format="date-time", example="2025-11-25T17:33:20Z"),
+ *         @OA\Property(property="dureeRestante", type="integer", example=30)
+ *     ),
  *     @OA\Property(property="metadata", type="object",
  *         @OA\Property(property="derniereModification", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
  *         @OA\Property(property="version", type="integer", example=1)
@@ -146,7 +152,7 @@ class CompteController extends Controller
             'page' => 'integer|min:1',
             'limit' => 'integer|min:1|max:100',
             'type' => ['nullable', Rule::in(['courant', 'epargne', 'cheque'])],
-            'statut' => ['nullable', Rule::in(['actif', 'inactif', 'bloqué'])],
+            'statut' => ['nullable', Rule::in(['actif', 'inactif', 'bloqué', 'fermé'])],
             'search' => 'nullable|string|max:255',
             'sort' => ['nullable', Rule::in(['dateCreation', 'solde', 'titulaire'])],
             'order' => ['nullable', Rule::in(['asc', 'desc'])],
@@ -400,7 +406,15 @@ class CompteController extends Controller
         // Temporairement désactiver l'authentification pour les tests
         // $user = Auth::user();
         $user = (object) ['type' => 'admin', 'id' => 'test-id']; // Simuler un utilisateur admin pour les tests
-        $compte = Compte::with('client')->findOrFail($id);
+        $compte = Compte::with('client')->find($id);
+
+        // Si le compte n'est pas trouvé localement et qu'il pourrait être archivé
+        if (!$compte) {
+            // Simulation : vérifier dans Neon si c'est un compte épargne archivé
+            // En production, cela ferait un appel API vers Neon
+            // Pour la simulation, on suppose que le compte n'existe pas
+            return $this->errorResponse('Compte non trouvé.', 404);
+        }
 
         // Vérifier les permissions
         if ($user->type === 'client' && $compte->titulaire !== $user->id) {
@@ -462,7 +476,7 @@ class CompteController extends Controller
 
         $validated = $request->validate([
             'type' => ['sometimes', 'in:courant,epargne,cheque'],
-            'statut' => ['sometimes', 'in:actif,inactif,bloqué'],
+            'statut' => ['sometimes', 'in:actif,inactif,bloqué,fermé'],
         ]);
 
         $compte->update($validated);
@@ -474,11 +488,11 @@ class CompteController extends Controller
     }
 
     /**
-     * Supprimer un compte (Archivage)
+     * Supprimer un compte 
      *
      * @OA\Delete(
      *     path="/api/v1/comptes/{id}",
-     *     summary="Supprimer un compte (Archivage)",
+     *     summary="Supprimer un compte ",
      *     tags={"Comptes"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -490,11 +504,11 @@ class CompteController extends Controller
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Compte archivé avec succès",
+     *         description="Compte supprimé avec succès",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte archivé avec succès")
+     *             @OA\Property(property="message", type="string", example="Compte supprimé avec succès")
      *         )
      *     ),
      *     @OA\Response(response=404, description="Compte non trouvé"),
@@ -515,140 +529,18 @@ class CompteController extends Controller
 
         $compte = Compte::findOrFail($id);
 
+        // Vérifier que le compte est actif (seuls les comptes actifs peuvent être supprimés/archivés)
+        if ($compte->statut !== 'actif') {
+            return $this->errorResponse('Seul un compte actif peut être supprimé.', 400);
+        }
+
         // Archiver le compte (soft delete)
         $compte->update(['statut' => 'fermé']);
 
         return $this->successResponse(
-            message: 'Compte archivé avec succès'
+            message: 'Compte supprimé avec succès'
         );
     }
 
-    /**
-     * Bloquer un compte temporairement
-     *
-     * @OA\Post(
-     *     path="/api/v1/comptes/{compteId}/bloquer",
-     *     summary="Bloquer un compte temporairement",
-     *     tags={"Comptes"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="compteId",
-     *         in="path",
-     *         required=true,
-     *         description="ID du compte à bloquer",
-     *         @OA\Schema(type="string", format="uuid")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"dateFinBlocage"},
-     *             @OA\Property(property="dateFinBlocage", type="string", format="date-time", example="2025-11-01T00:00:00Z"),
-     *             @OA\Property(property="motif", type="string", example="Suspicion d'activité frauduleuse")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Compte bloqué avec succès",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte bloqué avec succès"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Compte non trouvé"),
-     *     @OA\Response(response=401, description="Non autorisé"),
-     *     @OA\Response(response=403, description="Accès refusé")
-     * )
-     */
-    public function bloquer(Request $request, string $compteId)
-    {
-        // Temporairement désactiver l'authentification pour les tests
-        // $user = Auth::user();
-        $user = (object) ['type' => 'admin', 'id' => 'test-id']; // Simuler un utilisateur admin pour les tests
 
-        // Vérifier les permissions (seulement admin peut bloquer)
-        if ($user->type !== 'admin') {
-            return $this->errorResponse('Seul un administrateur peut bloquer un compte.', 403);
-        }
-
-        $compte = Compte::findOrFail($compteId);
-
-        $validated = $request->validate([
-            'dateFinBlocage' => 'required|date|after:now',
-            'motif' => 'nullable|string|max:255',
-        ]);
-
-        // Bloquer le compte
-        $compte->update([
-            'statut' => 'bloqué',
-            'date_debut_bloquage' => now(),
-            'date_fin_bloquage' => $validated['dateFinBlocage'],
-        ]);
-
-        return $this->successResponse(
-            new CompteResource($compte),
-            'Compte bloqué avec succès'
-        );
-    }
-
-    /**
-     * Supprimer définitivement un compte archivé
-     *
-     * @OA\Delete(
-     *     path="/api/v1/comptes/archives/{id}",
-     *     summary="Supprimer définitivement un compte archivé",
-     *     tags={"Comptes"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID du compte archivé à supprimer",
-     *         @OA\Schema(type="string", format="uuid")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Compte supprimé définitivement avec succès",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte supprimé définitivement avec succès")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Compte non trouvé"),
-     *     @OA\Response(response=401, description="Non autorisé"),
-     *     @OA\Response(response=403, description="Accès refusé")
-     * )
-     */
-    public function supprimerDefinitivement(string $id)
-    {
-        // Temporairement désactiver l'authentification pour les tests
-        // $user = Auth::user();
-        $user = (object) ['type' => 'admin', 'id' => 'test-id']; // Simuler un utilisateur admin pour les tests
-
-        // Vérifier les permissions (seulement admin peut supprimer définitivement)
-        if ($user->type !== 'admin') {
-            return $this->errorResponse('Seul un administrateur peut supprimer définitivement un compte.', 403);
-        }
-
-        // Trouver le compte (sans le scope global qui filtre les comptes fermés)
-        $compte = Compte::withoutGlobalScope('nonSupprime')
-            ->findOrFail($id);
-
-        // Vérifier que le compte est bien archivé
-        if ($compte->statut !== 'fermé') {
-            return $this->errorResponse('Ce compte n\'est pas archivé.', 404);
-        }
-
-        // Supprimer les transactions associées
-        $compte->transactions()->delete();
-
-        // Supprimer le compte
-        $compte->delete();
-
-        return $this->successResponse(
-            message: 'Compte supprimé définitivement avec succès'
-        );
-    }
 }

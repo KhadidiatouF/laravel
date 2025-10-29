@@ -52,6 +52,4 @@ Route::prefix('v1')->middleware(['rating'])->group(function () {
     Route::get('comptes/{id}', [CompteController::class, 'show']);
     Route::put('comptes/{id}', [CompteController::class, 'update']);
     Route::delete('comptes/{id}', [CompteController::class, 'destroy']);
-    Route::delete('comptes/archives/{id}', [CompteController::class, 'supprimerDefinitivement']);
-    Route::post('comptes/{compteId}/bloquer', [CompteController::class, 'bloquer']);
 });

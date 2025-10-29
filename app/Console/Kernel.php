@@ -14,11 +14,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // Archiver les comptes bloqués expirés toutes les heures
-        $schedule->job(new ArchiveExpiredBlockedAccounts)->hourly();
+        // Archiver tous les comptes bloqués chaque minuit
+        $schedule->job(new ArchiveExpiredBlockedAccounts)->dailyAt('00:00');
 
-        // Débloquer les comptes dont le blocage est terminé toutes les heures
-        $schedule->job(new UnblockExpiredAccounts)->hourly();
+        // Vérifier et débloquer les comptes depuis Neon tous les jours
+        $schedule->job(new UnblockExpiredAccounts)->daily();
     }
 
     /**

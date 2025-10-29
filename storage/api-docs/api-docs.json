@@ -532,8 +532,8 @@
                 "tags": [
                     "Comptes"
                 ],
-                "summary": "Supprimer un compte (Archivage)",
-                "description": "Supprimer un compte (Archivage)",
+                "summary": "Supprimer un compte ",
+                "description": "Supprimer un compte",
                 "operationId": "d48fa8ae024d7cd08de4d9be241220b0",
                 "parameters": [
                     {
@@ -549,7 +549,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Compte archivé avec succès",
+                        "description": "Compte supprimé avec succès",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -560,150 +560,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Compte archivé avec succès"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Compte non trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/comptes/{compteId}/bloquer": {
-            "post": {
-                "tags": [
-                    "Comptes"
-                ],
-                "summary": "Bloquer un compte temporairement",
-                "description": "Bloquer un compte temporairement",
-                "operationId": "fe2f6141c450b39f7be6854c72d7fb95",
-                "parameters": [
-                    {
-                        "name": "compteId",
-                        "in": "path",
-                        "description": "ID du compte à bloquer",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "dateFinBlocage"
-                                ],
-                                "properties": {
-                                    "dateFinBlocage": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "example": "2025-11-01T00:00:00Z"
-                                    },
-                                    "motif": {
-                                        "type": "string",
-                                        "example": "Suspicion d'activité frauduleuse"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Compte bloqué avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte bloqué avec succès"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Compte"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Compte non trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/comptes/archives/{id}": {
-            "delete": {
-                "tags": [
-                    "Comptes"
-                ],
-                "summary": "Supprimer définitivement un compte archivé",
-                "description": "Supprimer définitivement un compte archivé",
-                "operationId": "42d90e9449d0a04f95c2126965507765",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID du compte archivé à supprimer",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Compte supprimé définitivement avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte supprimé définitivement avec succès"
+                                            "example": "Compte supprimé avec succès"
                                         }
                                     },
                                     "type": "object"
@@ -1207,6 +1064,27 @@
                     "motifBlocage": {
                         "type": "string",
                         "example": null,
+                        "nullable": true
+                    },
+                    "informationsBlocage": {
+                        "description": "Informations de blocage pour les comptes épargne bloqués",
+                        "properties": {
+                            "dateDebutBlocage": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2025-10-25T17:33:20Z"
+                            },
+                            "dateFinBlocage": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2025-11-25T17:33:20Z"
+                            },
+                            "dureeRestante": {
+                                "type": "integer",
+                                "example": 30
+                            }
+                        },
+                        "type": "object",
                         "nullable": true
                     },
                     "metadata": {

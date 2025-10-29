@@ -24,6 +24,11 @@ class CompteResource extends JsonResource
             'dateCreation' => $this->date_creation?->toISOString(),
             'statut' => $this->statut,
             'motifBlocage' => $this->statut === 'bloqué' ? 'Inactivité de 30+ jours' : null,
+            'informationsBlocage' => $this->statut === 'bloqué' ? [
+                'dateDebutBlocage' => $this->date_debut_bloquage?->toISOString(),
+                'dateFinBlocage' => $this->date_fin_bloquage?->toISOString(),
+                'dureeRestante' => $this->date_fin_bloquage ? now()->diffInDays($this->date_fin_bloquage, false) : null,
+            ] : null,
             'metadata' => [
                 'derniereModification' => $this->updated_at?->toISOString(),
                 'version' => 1,
