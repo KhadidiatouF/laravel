@@ -47,11 +47,11 @@ use App\Events\CompteCreated;
  *     @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
  *     @OA\Property(property="numeroCompte", type="string", example="C-20251025-ABCD"),
  *     @OA\Property(property="titulaire", type="string", example="Mamadou Diallo"),
- *     @OA\Property(property="type", type="string", enum={"courant", "epargne", "bloqué", "cheque"}, example="cheque"),
+ *     @OA\Property(property="type", type="string", enum={"courant", "epargne", "cheque"}, example="courant"),
  *     @OA\Property(property="solde", type="number", format="float", example=500000),
  *     @OA\Property(property="devise", type="string", enum={"FCFA", "XOF", "EUR", "USD"}, example="FCFA"),
  *     @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
- *     @OA\Property(property="statut", type="string", enum={"actif", "inactif", "fermé"}, example="actif"),
+ *     @OA\Property(property="statut", type="string", enum={"actif", "inactif", "bloqué"}, example="actif"),
  *     @OA\Property(property="motifBlocage", type="string", nullable=true, example=null),
  *     @OA\Property(property="metadata", type="object",
  *         @OA\Property(property="derniereModification", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
@@ -90,14 +90,14 @@ class CompteController extends Controller
      *         in="query",
      *         description="Filtrer par type",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"courant", "epargne", "bloqué", "cheque"})
+     *         @OA\Schema(type="string", enum={"courant", "epargne", "cheque"})
      *     ),
      *     @OA\Parameter(
      *         name="statut",
      *         in="query",
      *         description="Filtrer par statut",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"actif", "inactif", "fermé"})
+     *         @OA\Schema(type="string", enum={"actif", "inactif", "bloqué", "fermé"})
      *     ),
      *     @OA\Parameter(
      *         name="search",
@@ -145,8 +145,8 @@ class CompteController extends Controller
         $validated = $request->validate([
             'page' => 'integer|min:1',
             'limit' => 'integer|min:1|max:100',
-            'type' => ['nullable', Rule::in(['courant', 'epargne', 'bloqué', 'cheque'])],
-            'statut' => ['nullable', Rule::in(['actif', 'inactif', 'fermé'])],
+            'type' => ['nullable', Rule::in(['courant', 'epargne', 'cheque'])],
+            'statut' => ['nullable', Rule::in(['actif', 'inactif', 'bloqué'])],
             'search' => 'nullable|string|max:255',
             'sort' => ['nullable', Rule::in(['dateCreation', 'solde', 'titulaire'])],
             'order' => ['nullable', Rule::in(['asc', 'desc'])],
@@ -271,7 +271,7 @@ class CompteController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"type", "soldeInitial", "devise", "client"},
-     *             @OA\Property(property="type", type="string", enum={"cheque", "courant", "epargne", "bloqué"}, example="cheque"),
+     *             @OA\Property(property="type", type="string", enum={"cheque", "courant", "epargne"}, example="courant"),
      *             @OA\Property(property="soldeInitial", type="number", minimum=10000, example=500000),
      *             @OA\Property(property="devise", type="string", enum={"FCFA", "XOF", "EUR", "USD"}, example="FCFA"),
      *             @OA\Property(property="solde", type="number", example=10000),
@@ -461,8 +461,8 @@ class CompteController extends Controller
         $compte = Compte::findOrFail($id);
 
         $validated = $request->validate([
-            'type' => ['sometimes', 'in:courant,epargne,bloqué,cheque'],
-            'statut' => ['sometimes', 'in:actif,inactif,fermé'],
+            'type' => ['sometimes', 'in:courant,epargne,cheque'],
+            'statut' => ['sometimes', 'in:actif,inactif,bloqué'],
         ]);
 
         $compte->update($validated);

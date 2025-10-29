@@ -56,7 +56,6 @@
                             "enum": [
                                 "courant",
                                 "epargne",
-                                "bloqué",
                                 "cheque"
                             ]
                         }
@@ -71,6 +70,7 @@
                             "enum": [
                                 "actif",
                                 "inactif",
+                                "bloqué",
                                 "fermé"
                             ]
                         }
@@ -178,10 +178,9 @@
                                         "enum": [
                                             "cheque",
                                             "courant",
-                                            "epargne",
-                                            "bloqué"
+                                            "epargne"
                                         ],
-                                        "example": "cheque"
+                                        "example": "courant"
                                     },
                                     "soldeInitial": {
                                         "type": "number",
@@ -1172,10 +1171,9 @@
                         "enum": [
                             "courant",
                             "epargne",
-                            "bloqué",
                             "cheque"
                         ],
-                        "example": "cheque"
+                        "example": "courant"
                     },
                     "solde": {
                         "type": "number",
@@ -1202,7 +1200,7 @@
                         "enum": [
                             "actif",
                             "inactif",
-                            "fermé"
+                            "bloqué"
                         ],
                         "example": "actif"
                     },

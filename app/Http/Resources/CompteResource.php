@@ -23,7 +23,7 @@ class CompteResource extends JsonResource
             'devise' => 'FCFA',
             'dateCreation' => $this->date_creation?->toISOString(),
             'statut' => $this->statut,
-            'motifBlocage' => $this->statut === 'bloque' ? 'Inactivité de 30+ jours' : null,
+            'motifBlocage' => $this->statut === 'bloqué' ? 'Inactivité de 30+ jours' : null,
             'metadata' => [
                 'derniereModification' => $this->updated_at?->toISOString(),
                 'version' => 1,

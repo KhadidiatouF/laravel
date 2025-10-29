@@ -11,9 +11,9 @@ return new class extends Migration {
             $table->uuid('id')->primary();
             $table->string('numCompte')->unique()->index();
             $table->uuid('titulaire');
-            $table->enum('type', ['courant', 'epargne', 'bloqué', 'cheque']);
+            $table->enum('type', ['courant', 'epargne', 'cheque']);
             $table->date('date_creation')->useCurrent();
-            $table->enum('statut', ['actif', 'inactif', 'fermé', 'bloqué'])->default('actif');
+            $table->enum('statut', ['actif', 'inactif', 'bloqué', 'fermé'])->default('actif');
             $table->timestamps();
 
             $table->foreign('titulaire')->references('id')

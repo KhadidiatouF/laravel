@@ -17,8 +17,8 @@ class CompteSeeder extends Seeder
             return;
         }
 
-        $types = ['courant', 'epargne', 'bloqué'];
-        $statuts = ['actif', 'inactif', 'fermé'];
+        $types = ['courant', 'epargne', 'cheque'];
+        $statuts = ['actif', 'inactif', 'bloqué', 'fermé'];
 
         foreach ($clients as $client) {
             // Créer 1 à 3 comptes par client
