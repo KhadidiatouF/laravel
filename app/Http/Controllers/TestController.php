@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 /**
  * @OA\Info(
@@ -14,23 +12,15 @@ use Illuminate\Support\Str;
  *     version="1.0.0",
  *     description="API de gestion bancaire avec authentification Passport"
  * )
- *
- *   @OA\Server(
- *     url="https://khadidiatou-fall-api-laravel-0luq.onrender.com",
+ * * @OA\Server(
+ *     url="http://khadidiatou-fall-api-laravel-0luq.onrender.com",
  *     description="Serveur de production"
  * )
  *
+ * 
  * @OA\Server(
  *     url="http://127.0.0.1:8000",
  *     description="Serveur de développement"
- * )
- *
- * @OA\SecurityScheme(
- *     securityScheme="bearerAuth",
- *     type="http",
- *     scheme="bearer",
- *     bearerFormat="JWT",
- *     description="Authentification désactivée pour les tests"
  * )
  */
 class TestController extends Controller
@@ -70,34 +60,14 @@ class TestController extends Controller
      */
     public function login(Request $request)
     {
-        try {
-            $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->first();
 
-            if (!$user) {
-                return response()->json(['message' => 'Utilisateur non trouvé'], 401);
-            }
-
-            if (!Hash::check($request->password, $user->password)) {
-                return response()->json(['message' => 'Mot de passe incorrect'], 401);
-            }
-
-            // Générer un token simple pour les tests
-            $token = hash('sha256', $user->id . time() . Str::random(32));
-
-            return response()->json([
-                'token' => $token,
-                'user' => [
-                    'id' => $user->id,
-                    'email' => $user->email,
-                    'nom' => $user->nom,
-                    'prenom' => $user->prenom,
-                    'type' => $user->type
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Login error: ' . $e->getMessage());
-            Log::error('Login error trace: ' . $e->getTraceAsString());
-            return response()->json(['message' => 'Erreur serveur: ' . $e->getMessage()], 500);
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Identifiants incorrects'], 401);
         }
+
+        return response()->json([
+            'token' => $user->createToken('API TOKEN')->accessToken
+        ]);
     }
 }

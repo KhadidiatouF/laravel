@@ -6,7 +6,7 @@ WORKDIR /app
 # Copier les fichiers de dépendances
 COPY composer.json composer.lock ./
 
-# Installer les dépendances PHP
+# Installer les dépendances PHP sans scripts post-install
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts
 
 # Étape 2: Image finale pour l'application
@@ -38,9 +38,9 @@ RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
 # Créer un fichier .env minimal pour le build
 RUN echo "APP_NAME=Laravel" > .env && \
     echo "APP_ENV=production" >> .env && \
-    echo "APP_KEY=base64:c3VwZXJzZWNyZXRrZXl0aGF0aXMyNWNoYXJzUm9uZzE=" >> .env && \
+    echo "APP_KEY=" >> .env && \
     echo "APP_DEBUG=false" >> .env && \
-    echo "APP_URL=https://khadidiatou-fall-api-laravel-0luq.onrender.com" >> .env && \
+    echo "APP_URL=http://localhost" >> .env && \
     echo "" >> .env && \
     echo "LOG_CHANNEL=stack" >> .env && \
     echo "LOG_LEVEL=error" >> .env && \
@@ -54,27 +54,25 @@ RUN echo "APP_NAME=Laravel" > .env && \
     echo "" >> .env && \
     echo "CACHE_DRIVER=file" >> .env && \
     echo "SESSION_DRIVER=file" >> .env && \
-    echo "QUEUE_CONNECTION=sync" >> .env && \
-    echo "" >> .env && \
-    echo "PASSPORT_PERSONAL_ACCESS_CLIENT_ID=1" >> .env && \
-    echo "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=secret123" >> .env && \
-    echo "" >> .env && \
-    echo "PASSPORT_PRIVATE_KEY=" >> .env && \
-    echo "PASSPORT_PUBLIC_KEY=" >> .env
+    echo "QUEUE_CONNECTION=sync" >> .env
 
+# Changer les permissions du fichier .env pour l'utilisateur laravel
 RUN chown laravel:laravel .env
 
 # Générer la clé d'application et optimiser
 USER laravel
-RUN php artisan key:generate --force \
-    && php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+RUN php artisan key:generate --force && \
+    php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
 USER root
 
-# Copier le script d'entrée (optionnel)
+# Copier le script d'entrée
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Passer à l'utilisateur non-root
+USER laravel
 
 # Exposer le port 8000
 EXPOSE 8000

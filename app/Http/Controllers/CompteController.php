@@ -152,10 +152,10 @@ class CompteController extends Controller
             'order' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
 
-        $query = Compte::with('client');
+        $query = Compte::with('client')->where('statut', 'actif');
 
         // Si c'est un client, filtrer par ses comptes
-        if ($user && $user->type === 'client') {
+        if ($user->type === 'client') {
             $query->where('titulaire', $user->id);
         }
 
@@ -204,7 +204,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes/archives",
      *     summary="Lister les comptes archivés",
      *     tags={"Comptes"},
-     *     security={},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
@@ -266,7 +266,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes",
      *     summary="Créer un nouveau compte",
      *     tags={"Comptes"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -373,7 +373,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes/{id}",
      *     summary="Afficher un compte spécifique",
      *     tags={"Comptes"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -400,7 +400,6 @@ class CompteController extends Controller
         // Temporairement désactiver l'authentification pour les tests
         // $user = Auth::user();
         $user = (object) ['type' => 'admin', 'id' => 'test-id']; // Simuler un utilisateur admin pour les tests
-
         $compte = Compte::with('client')->findOrFail($id);
 
         // Vérifier les permissions
@@ -418,7 +417,7 @@ class CompteController extends Controller
      *     path="/api/v1/comptes/{id}",
      *     summary="Mettre à jour un compte",
      *     tags={"Comptes"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",

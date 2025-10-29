@@ -12,14 +12,6 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\User::factory()->create([
-            'nom' => 'Admin',
-            'prenom' => 'System',
-            'email' => 'admin@example.com',
-            'telephone' => '771234567',
-            'adresse' => 'Dakar',
-            'password' => bcrypt('password'),
-            'type' => 'admin',
-        ]);
+        //
     }
 }

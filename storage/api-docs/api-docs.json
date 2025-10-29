@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "https://khadidiatou-fall-api-laravel-0luq.onrender.com",
+            "url": "http://khadidiatou-fall-api-laravel-0luq.onrender.com",
             "description": "Serveur de production"
         },
         {
@@ -306,7 +306,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -437,7 +437,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             },
@@ -525,7 +525,7 @@
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             },
@@ -1286,15 +1286,9 @@
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
-                "description": "Entrez le token Bearer obtenu via /api/login",
+                "scheme": "bearer",
                 "bearerFormat": "JWT",
-                "scheme": "bearer"
-            },
-            "sanctum": {
-                "type": "apiKey",
-                "description": "Enter token in format (Bearer <token>)",
-                "name": "Authorization",
-                "in": "header"
+                "description": "Enter token in format (Bearer <token>)"
             }
         }
     },
@@ -1314,7 +1308,7 @@
     ],
     "security": [
         {
-            "sanctum": []
+            "bearerAuth": []
         }
     ]
 }
