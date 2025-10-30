@@ -7,9 +7,11 @@ use App\Models\Client;
 use App\Http\Resources\CompteResource;
 use App\Http\Requests\StoreCompteRequest;
 use App\Traits\ApiResponseTrait;
+use App\Mail\CompteCreatedMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use App\Events\CompteCreated;
@@ -295,7 +297,9 @@ class CompteController extends Controller
      *                 @OA\Property(property="telephone", type="string", example="+221771234567"),
      *                 @OA\Property(property="adresse", type="string", example="Dakar, Sénégal"),
      *                 @OA\Property(property="nci", type="string", example="1234567890123A", nullable=true)
-     *             )
+     *             ),
+     *             @OA\Property(property="dateDebutBlocage", type="string", format="date", nullable=true, example="2025-10-30", description="Date de début du blocage (pour comptes épargne)"),
+     *             @OA\Property(property="dateFinBlocage", type="string", format="date", nullable=true, example="2025-11-02", description="Date de fin du blocage (doit être postérieure à dateDebutBlocage)")
      *         )
      *     ),
      *     @OA\Response(
@@ -398,6 +402,60 @@ class CompteController extends Controller
             'date_transaction' => now(),
         ]);
 
+        // Envoyer l'email de confirmation
+        try {
+            \Illuminate\Support\Facades\Log::info('=== ENVOI EMAIL ===');
+            \Illuminate\Support\Facades\Log::info('Destinataire: ' . $client->email);
+            \Illuminate\Support\Facades\Log::info('Mailer utilisé: ' . config('mail.default'));
+            \Illuminate\Support\Facades\Log::info('Host SMTP: ' . config('mail.mailers.smtp.host'));
+
+            if (!empty($validated['client']['id'])) {
+                // Client existant - pas de mot de passe généré
+                \Illuminate\Support\Facades\Log::info('Type: Client existant');
+                Mail::to($client->email)->send(new CompteCreatedMail($compte, $client));
+            } else {
+                // Nouveau client - inclure le mot de passe généré
+                \Illuminate\Support\Facades\Log::info('Type: Nouveau client avec mot de passe généré');
+                Mail::to($client->email)->send(new CompteCreatedMail($compte, $client, $password));
+            }
+
+            \Illuminate\Support\Facades\Log::info('✅ Email envoyé avec succès à: ' . $client->email);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('❌ Erreur lors de l\'envoi de l\'email: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Classe d\'erreur: ' . get_class($e));
+            \Illuminate\Support\Facades\Log::error('Code d\'erreur: ' . $e->getCode());
+
+            // Essayer avec Mail::raw() comme fallback
+            try {
+                \Illuminate\Support\Facades\Log::info('Tentative d\'envoi avec Mail::raw()');
+                $messageContent = "Bienvenue {$client->prenom} {$client->nom}!\n\n";
+                $messageContent .= "Votre compte bancaire a été créé avec succès.\n";
+                $messageContent .= "Numéro de compte: {$compte->numCompte}\n";
+                $messageContent .= "Type: " . ucfirst($compte->type) . "\n";
+                $messageContent .= "Statut: " . ucfirst($compte->statut) . "\n\n";
+
+                if ($password) {
+                    $messageContent .= "Votre mot de passe temporaire: {$password}\n";
+                    $messageContent .= "Veuillez le changer lors de votre première connexion.\n\n";
+                }
+
+                $messageContent .= "Cordialement,\nBanque Example";
+
+                Mail::raw($messageContent, function ($message) use ($client) {
+                    $message->to($client->email)
+                            ->subject('Votre compte bancaire a été créé - Banque Example');
+                });
+
+                \Illuminate\Support\Facades\Log::info('✅ Email de fallback envoyé avec succès');
+
+            } catch (\Exception $fallbackError) {
+                \Illuminate\Support\Facades\Log::error('❌ Échec même du fallback: ' . $fallbackError->getMessage());
+            }
+
+            // Ne pas échouer la création du compte si l'email échoue
+        }
+
         // Déclencher l'événement (seulement pour nouveau client)
         if (!empty($validated['client']['id'])) {
             event(new CompteCreated($compte, $client, null, null));
@@ -407,7 +465,7 @@ class CompteController extends Controller
 
         return $this->successResponse(
             new CompteResource($compte),
-            'Compte créé avec succès',
+            'Compte créé avec succès - Email envoyé à ' . $client->email,
             201
         );
     }
