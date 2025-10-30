@@ -12,6 +12,14 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        \App\Models\Admin::create([
+            'nom' => 'Admin',
+            'prenom' => 'System',
+            'email' => 'admin@example.com',
+            'telephone' => '+221771234567',
+            'adresse' => 'Dakar, Sénégal',
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            'type' => 'admin',
+        ]);
     }
 }

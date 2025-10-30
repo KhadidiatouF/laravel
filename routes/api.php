@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompteController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\TestController;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -41,15 +42,27 @@ Route::prefix('v1')->middleware(['rating'])->group(function () {
     Route::put('users/{id}', [UserController::class, 'update']);
     Route::delete('users/{id}', [UserController::class, 'destroy']);
 
-    // Routes pour les comptes
-    Route::get('comptes', [CompteController::class, 'index']);
-    Route::post('comptes', [CompteController::class, 'store'])->middleware('logging');
+    // Routes pour les clients
+    Route::get('clients', [ClientController::class, 'index']);
+    Route::post('clients', [ClientController::class, 'store']);
+    Route::get('clients/{id}', [ClientController::class, 'show']);
+    Route::put('clients/{id}', [ClientController::class, 'update']);
+    Route::delete('clients/{id}', [ClientController::class, 'destroy']);
+
 
     // Routes spécifiques (sans paramètres - doivent être avant les routes paramétrées)
     Route::get('comptes/archives', [CompteController::class, 'archives']);
+    // Routes pour les comptes
+    Route::middleware('auth:api')->group(function () {
+        Route::get('comptes', [CompteController::class, 'index']);
+        Route::post('comptes', [CompteController::class, 'store'])->middleware('logging');
+    });
+
 
     // Routes paramétrées (avec {id} ou {compteId})
-    Route::get('comptes/{id}', [CompteController::class, 'show']);
-    Route::put('comptes/{id}', [CompteController::class, 'update']);
-    Route::delete('comptes/{id}', [CompteController::class, 'destroy']);
+    Route::middleware('auth:api')->group(function () {
+        Route::get('comptes/{id}', [CompteController::class, 'show']);
+        Route::put('comptes/{id}', [CompteController::class, 'update']);
+        Route::delete('comptes/{id}', [CompteController::class, 'destroy']);
+    });
 });

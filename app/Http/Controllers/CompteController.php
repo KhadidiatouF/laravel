@@ -103,7 +103,7 @@ class CompteController extends Controller
      *         in="query",
      *         description="Filtrer par statut",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"actif", "inactif", "bloqué", "fermé"})
+     *         @OA\Schema(type="string", enum={"actif", "inactif", "bloqué"})
      *     ),
      *     @OA\Parameter(
      *         name="search",
@@ -143,26 +143,33 @@ class CompteController extends Controller
      */
     public function index(Request $request)
     {
-        // Temporairement désactiver l'authentification pour les tests
-        // $user = Auth::user();
-        $user = (object) ['type' => 'admin', 'id' => 'test-id']; // Simuler un utilisateur admin pour les tests
+        $user = Auth::guard('api')->user();
+
+        \Illuminate\Support\Facades\Log::info('Utilisateur authentifié dans CompteController: ' . ($user ? $user->email : 'null'));
+
+        if (!$user) {
+            return $this->errorResponse('Utilisateur non authentifié.', 401);
+        }
 
         // Validation des paramètres
         $validated = $request->validate([
             'page' => 'integer|min:1',
             'limit' => 'integer|min:1|max:100',
             'type' => ['nullable', Rule::in(['courant', 'epargne', 'cheque'])],
-            'statut' => ['nullable', Rule::in(['actif', 'inactif', 'bloqué', 'fermé'])],
+            'statut' => ['nullable', Rule::in(['actif', 'inactif', 'bloqué'])],
             'search' => 'nullable|string|max:255',
             'sort' => ['nullable', Rule::in(['dateCreation', 'solde', 'titulaire'])],
             'order' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
 
-        $query = Compte::with('client')->where('statut', 'actif');
+        $query = Compte::with('client');
 
-        // Si c'est un client, filtrer par ses comptes
+        // Si c'est un client, filtrer par ses comptes uniquement
         if ($user->type === 'client') {
             $query->where('titulaire', $user->id);
+        } else {
+            // Admin voit tous les comptes actifs par défaut
+            $query->where('statut', 'actif');
         }
 
         // Appliquer les filtres
@@ -242,9 +249,7 @@ class CompteController extends Controller
      */
     public function archives(Request $request)
     {
-        // Temporairement désactiver l'authentification pour les tests
-        // $user = Auth::user();
-        $user = (object) ['type' => 'admin', 'id' => 'test-id']; // Simuler un utilisateur admin pour les tests
+        $user = Auth::guard('api')->user();
 
         if ($user->type !== 'admin') {
             return $this->errorResponse('Accès refusé. Réservé aux administrateurs.', 403);
@@ -320,6 +325,7 @@ class CompteController extends Controller
      */
     public function store(StoreCompteRequest $request)
     {
+        $user = Auth::guard('api')->user();
         $validated = $request->validated();
 
         // Vérifier si le client existe
@@ -330,7 +336,11 @@ class CompteController extends Controller
                 return $this->errorResponse('Client non trouvé.', 404);
             }
         } else {
-            // Créer un nouveau client
+            // Créer un nouveau client (seulement admin)
+            if ($user->type !== 'admin') {
+                return $this->errorResponse('Seul un administrateur peut créer un nouveau client.', 403);
+            }
+
             $password = Str::random(8);
             $code = Str::random(6);
 
@@ -362,8 +372,12 @@ class CompteController extends Controller
             'date_transaction' => now(),
         ]);
 
-        // Déclencher l'événement
-        event(new CompteCreated($compte, $client, $password ?? null, $code ?? null));
+        // Déclencher l'événement (seulement pour nouveau client)
+        if (!empty($validated['client']['id'])) {
+            event(new CompteCreated($compte, $client, null, null));
+        } else {
+            event(new CompteCreated($compte, $client, $password, $code));
+        }
 
         return $this->successResponse(
             new CompteResource($compte),
@@ -403,9 +417,7 @@ class CompteController extends Controller
      */
     public function show(string $id)
     {
-        // Temporairement désactiver l'authentification pour les tests
-        // $user = Auth::user();
-        $user = (object) ['type' => 'admin', 'id' => 'test-id']; // Simuler un utilisateur admin pour les tests
+        $user = Auth::guard('api')->user();
         $compte = Compte::with('client')->find($id);
 
         // Si le compte n'est pas trouvé localement et qu'il pourrait être archivé
@@ -416,7 +428,7 @@ class CompteController extends Controller
             return $this->errorResponse('Compte non trouvé.', 404);
         }
 
-        // Vérifier les permissions
+        // Vérifier les permissions : client ne peut voir que ses propres comptes
         if ($user->type === 'client' && $compte->titulaire !== $user->id) {
             return $this->errorResponse('Accès refusé à ce compte.', 403);
         }
@@ -463,21 +475,26 @@ class CompteController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // Temporairement désactiver l'authentification pour les tests
-        // $user = Auth::user();
-        $user = (object) ['type' => 'admin', 'id' => 'test-id']; // Simuler un utilisateur admin pour les tests
-
-        // Vérifier les permissions (seulement admin peut modifier)
-        if ($user->type !== 'admin') {
-            return $this->errorResponse('Seul un administrateur peut modifier un compte.', 403);
-        }
-
+        $user = Auth::guard('api')->user();
         $compte = Compte::findOrFail($id);
 
-        $validated = $request->validate([
-            'type' => ['sometimes', 'in:courant,epargne,cheque'],
-            'statut' => ['sometimes', 'in:actif,inactif,bloqué,fermé'],
-        ]);
+        // Vérifier les permissions
+        if ($user->type === 'client') {
+            // Client ne peut modifier que ses propres comptes
+            if ($compte->titulaire !== $user->id) {
+                return $this->errorResponse('Accès refusé à ce compte.', 403);
+            }
+            // Client ne peut modifier que le type (pas le statut)
+            $validated = $request->validate([
+                'type' => ['sometimes', 'in:courant,epargne,cheque'],
+            ]);
+        } else {
+            // Admin peut tout modifier
+            $validated = $request->validate([
+                'type' => ['sometimes', 'in:courant,epargne,cheque'],
+                'statut' => ['sometimes', 'in:actif,inactif,bloqué'],
+            ]);
+        }
 
         $compte->update($validated);
 
@@ -518,20 +535,18 @@ class CompteController extends Controller
      */
     public function destroy(string $id)
     {
-        // Temporairement désactiver l'authentification pour les tests
-        // $user = Auth::user();
-        $user = (object) ['type' => 'admin', 'id' => 'test-id']; // Simuler un utilisateur admin pour les tests
+        $user = Auth::guard('api')->user();
 
-        // Vérifier les permissions (seulement admin peut supprimer)
+        // Vérifier les permissions (seulement admin peut archiver)
         if ($user->type !== 'admin') {
             return $this->errorResponse('Seul un administrateur peut archiver un compte.', 403);
         }
 
         $compte = Compte::findOrFail($id);
 
-        // Vérifier que le compte est actif (seuls les comptes actifs peuvent être supprimés/archivés)
+        // Vérifier que le compte est actif (seuls les comptes actifs peuvent être archivés)
         if ($compte->statut !== 'actif') {
-            return $this->errorResponse('Seul un compte actif peut être supprimé.', 400);
+            return $this->errorResponse('Seul un compte actif peut être archivé.', 400);
         }
 
         // Archiver le compte (soft delete)

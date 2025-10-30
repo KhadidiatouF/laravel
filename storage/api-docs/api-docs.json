@@ -16,6 +16,410 @@
         }
     ],
     "paths": {
+        "/api/v1/clients": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Lister les clients",
+                "description": "Lister tous les clients (Admin seulement)",
+                "operationId": "b302d909c0e1166a2c033bfd17ed030f",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche par nom, prénom ou email",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des clients",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Client"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "$ref": "#/components/schemas/Pagination"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/Links"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé - Admin requis"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Créer un nouveau client",
+                "description": "Créer un nouveau client",
+                "operationId": "72a51329a9c85d73e15e640b5b53e470",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nom",
+                                    "prenom",
+                                    "email",
+                                    "telephone",
+                                    "adresse"
+                                ],
+                                "properties": {
+                                    "nom": {
+                                        "type": "string",
+                                        "example": "Diallo"
+                                    },
+                                    "prenom": {
+                                        "type": "string",
+                                        "example": "Mamadou"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "mamadou.diallo@example.com"
+                                    },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "+221771234567"
+                                    },
+                                    "adresse": {
+                                        "type": "string",
+                                        "example": "Dakar, Sénégal"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Client créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client créé avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Client"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "VALIDATION_ERROR"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Les données fournies sont invalides"
+                                                },
+                                                "details": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{id}": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Afficher un client spécifique",
+                "description": "Afficher un client spécifique",
+                "operationId": "0a628c8462ccec3d2798255b1015c22c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du client",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Client"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client non trouvé"
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Mettre à jour un client",
+                "description": "Mettre à jour un client",
+                "operationId": "d3fe03185b96f228b623f3b36d7c086f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nom": {
+                                        "type": "string",
+                                        "example": "Diallo"
+                                    },
+                                    "prenom": {
+                                        "type": "string",
+                                        "example": "Mamadou"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "mamadou.diallo@example.com"
+                                    },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "+221771234567"
+                                    },
+                                    "adresse": {
+                                        "type": "string",
+                                        "example": "Dakar, Sénégal"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Client mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Client"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client non trouvé"
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Supprimer un client",
+                "description": "Supprimer un client",
+                "operationId": "edeb32faf4e5856e533c5dc13c18e780",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client non trouvé"
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/comptes": {
             "get": {
                 "tags": [
@@ -70,8 +474,7 @@
                             "enum": [
                                 "actif",
                                 "inactif",
-                                "bloqué",
-                                "fermé"
+                                "bloqué"
                             ]
                         }
                     },
@@ -591,30 +994,61 @@
                     "Authentification"
                 ],
                 "summary": "Authentification utilisateur",
-                "description": "Permet à un utilisateur de se connecter et d'obtenir un token d'accès",
+                "description": "Permet à un utilisateur (admin ou client) de se connecter et d'obtenir un token d'accès et un refresh token",
                 "operationId": "login",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "email",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "admin@example.com"
+                                "oneOf": [
+                                    {
+                                        "title": "Connexion Admin",
+                                        "required": [
+                                            "email",
+                                            "password"
+                                        ],
+                                        "properties": {
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "example": "admin@example.com"
+                                            },
+                                            "password": {
+                                                "type": "string",
+                                                "format": "password",
+                                                "example": "password"
+                                            }
+                                        },
+                                        "type": "object"
                                     },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "password"
+                                    {
+                                        "title": "Connexion Client",
+                                        "required": [
+                                            "email",
+                                            "password",
+                                            "codeSms"
+                                        ],
+                                        "properties": {
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "example": "client@example.com"
+                                            },
+                                            "password": {
+                                                "type": "string",
+                                                "format": "password",
+                                                "example": "password"
+                                            },
+                                            "codeSms": {
+                                                "description": "Code de vérification SMS requis pour la première connexion",
+                                                "type": "string",
+                                                "example": "0AjbUW"
+                                            }
+                                        },
+                                        "type": "object"
                                     }
-                                },
-                                "type": "object"
+                                ]
                             }
                         }
                     }
@@ -626,9 +1060,80 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "token": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
                                             "type": "string",
-                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
+                                            "example": "Connexion réussie"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                        },
+                                                        "nom": {
+                                                            "type": "string",
+                                                            "example": "Admin"
+                                                        },
+                                                        "prenom": {
+                                                            "type": "string",
+                                                            "example": "System"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "admin@example.com"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "admin",
+                                                                "client"
+                                                            ],
+                                                            "example": "admin"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "access_token": {
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Code SMS requis pour la première connexion",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code de vérification requis pour la première connexion"
                                         }
                                     },
                                     "type": "object"
@@ -637,14 +1142,41 @@
                         }
                     },
                     "401": {
-                        "description": "Identifiants incorrects",
+                        "description": "Identifiants incorrects ou code SMS invalide",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "Identifiants incorrects"
+                                            "example": "Identifiants incorrects ou code SMS invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Données de requête invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données fournies sont invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -951,6 +1483,65 @@
     },
     "components": {
         "schemas": {
+            "Client": {
+                "title": "Client",
+                "description": "Objet représentant un client",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "Diallo"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "example": "Mamadou"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "mamadou.diallo@example.com"
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "example": "+221771234567"
+                    },
+                    "adresse": {
+                        "type": "string",
+                        "example": "Dakar, Sénégal"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "client"
+                        ],
+                        "example": "client"
+                    },
+                    "dateCreation": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-10-25T17:33:20Z"
+                    },
+                    "metadata": {
+                        "properties": {
+                            "derniereModification": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2025-10-25T17:33:20Z"
+                            },
+                            "version": {
+                                "type": "integer",
+                                "example": 1
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "Pagination": {
                 "title": "Pagination",
                 "description": "Informations de pagination",
@@ -1169,6 +1760,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Clients",
+            "description": "Clients"
+        },
         {
             "name": "Comptes",
             "description": "Comptes"
