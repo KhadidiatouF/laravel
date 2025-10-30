@@ -106,23 +106,42 @@ class TestController extends Controller
      */
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-            'codeSms' => 'nullable|string',
-        ]);
+        try {
+            Log::info('=== DÉBUT DE LA MÉTHODE LOGIN ===');
+            Log::info('Email reçu: ' . $request->email);
 
-        Log::info('Tentative de connexion pour email: ' . $request->email);
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|string',
+                'codeSms' => 'nullable|string',
+            ]);
+
+            Log::info('Validation passée pour email: ' . $request->email);
 
         // Essayer d'abord de trouver un admin
-        $user = User::where('email', $request->email)->where('type', 'admin')->first();
-
-        Log::info('Admin trouvé: ' . ($user ? 'Oui' : 'Non'));
+        try {
+            $user = User::where('email', $request->email)->where('type', 'admin')->first();
+            Log::info('Admin trouvé: ' . ($user ? 'Oui' : 'Non'));
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la recherche d\'admin pour ' . $request->email . ': ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur interne lors de la recherche d\'utilisateur'
+            ], 500);
+        }
 
         // Si pas trouvé, chercher un client
         if (!$user) {
-            $user = User::where('email', $request->email)->where('type', 'client')->first();
-            Log::info('Client trouvé: ' . ($user ? 'Oui' : 'Non'));
+            try {
+                $user = User::where('email', $request->email)->where('type', 'client')->first();
+                Log::info('Client trouvé: ' . ($user ? 'Oui' : 'Non'));
+            } catch (\Exception $e) {
+                Log::error('Erreur lors de la recherche de client pour ' . $request->email . ': ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur interne lors de la recherche d\'utilisateur'
+                ], 500);
+            }
         }
 
         if ($user) {
@@ -166,9 +185,16 @@ class TestController extends Controller
         }
 
         // Créer le token d'accès
-        $token = $user->createToken('API TOKEN');
-
-        Log::info('Token créé pour utilisateur: ' . $user->email . ', Token: ' . $token->accessToken);
+        try {
+            $token = $user->createToken('API TOKEN');
+            Log::info('Token créé pour utilisateur: ' . $user->email . ', Token: ' . $token->accessToken);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la création du token pour ' . $user->email . ': ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur interne lors de la création du token'
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
@@ -186,5 +212,13 @@ class TestController extends Controller
                 'expires_in' => 3600, // 1 heure
             ]
         ], 200, [], JSON_UNESCAPED_SLASHES);
+        } catch (\Exception $e) {
+            Log::error('Erreur générale dans la méthode login pour ' . $request->email . ': ' . $e->getMessage());
+            Log::error('Trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur interne du serveur'
+            ], 500);
+        }
     }
 }
