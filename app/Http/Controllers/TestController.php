@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Info(
@@ -186,13 +187,98 @@ class TestController extends Controller
 
         // Créer le token d'accès
         try {
+            Log::info('=== DÉBUT CRÉATION TOKEN ===');
+            Log::info('Utilisateur: ' . $user->email . ' (ID: ' . $user->id . ', Type: ' . $user->type . ')');
+
+            // Vérifier la base de données
+            try {
+                $userFromDb = \App\Models\User::find($user->id);
+                Log::info('Utilisateur trouvé en DB: ' . ($userFromDb ? 'Oui' : 'Non'));
+            } catch (\Exception $dbException) {
+                Log::error('Erreur DB: ' . $dbException->getMessage());
+            }
+
+            // Vérifier les clés Passport
+            $privateKeyPath = storage_path('oauth-private.key');
+            $publicKeyPath = storage_path('oauth-public.key');
+            Log::info('Clés Passport - Private: ' . (file_exists($privateKeyPath) ? 'Existe' : 'Manquant'));
+            Log::info('Clés Passport - Public: ' . (file_exists($publicKeyPath) ? 'Existe' : 'Manquant'));
+
+            if (!file_exists($privateKeyPath) || !file_exists($publicKeyPath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Configuration Passport incomplète - clés manquantes',
+                    'debug' => [
+                        'private_key_exists' => file_exists($privateKeyPath),
+                        'public_key_exists' => file_exists($publicKeyPath)
+                    ]
+                ], 500);
+            }
+
+            // Vérifier les clients OAuth
+            $clientsCount = DB::table('oauth_clients')->count();
+            Log::info('Nombre de clients OAuth: ' . $clientsCount);
+
+            $personalClientsCount = DB::table('oauth_personal_access_clients')->count();
+            Log::info('Nombre de clients personnels: ' . $personalClientsCount);
+
+            // Créer le token
+            Log::info('Tentative de création du token...');
             $token = $user->createToken('API TOKEN');
-            Log::info('Token créé pour utilisateur: ' . $user->email . ', Token: ' . $token->accessToken);
+            Log::info('Token créé avec succès!');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Connexion réussie',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'nom' => $user->nom,
+                        'prenom' => $user->prenom,
+                        'email' => $user->email,
+                        'type' => $user->type,
+                    ],
+                    'access_token' => $token->accessToken,
+                    'token_type' => 'Bearer',
+                    'expires_in' => 3600,
+                ]
+            ], 200, [], JSON_UNESCAPED_SLASHES);
+
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la création du token pour ' . $user->email . ': ' . $e->getMessage());
+            Log::error('=== ERREUR CRÉATION TOKEN ===');
+            Log::error('Message: ' . $e->getMessage());
+            Log::error('Classe: ' . get_class($e));
+            Log::error('Fichier: ' . $e->getFile() . ':' . $e->getLine());
+            Log::error('Trace: ' . $e->getTraceAsString());
+
+            // Informations de diagnostic
+            $debugInfo = [
+                'user_id' => $user->id ?? 'N/A',
+                'user_email' => $user->email ?? 'N/A',
+                'user_type' => $user->type ?? 'N/A',
+                'private_key_exists' => file_exists(storage_path('oauth-private.key')),
+                'public_key_exists' => file_exists(storage_path('oauth-public.key')),
+            ];
+
+            try {
+                $debugInfo['oauth_clients_count'] = DB::table('oauth_clients')->count();
+                $debugInfo['personal_clients_count'] = DB::table('oauth_personal_access_clients')->count();
+                $debugInfo['user_tokens_count'] = $user->tokens()->count();
+            } catch (\Exception $dbError) {
+                $debugInfo['db_error'] = $dbError->getMessage();
+            }
+
+            // Retourner les informations de debug dans la réponse pour diagnostic
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur interne lors de la création du token'
+                'message' => 'Erreur interne lors de la création du token',
+                'debug' => $debugInfo,
+                'error_details' => [
+                    'message' => $e->getMessage(),
+                    'class' => get_class($e),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
             ], 500);
         }
 
@@ -218,6 +304,52 @@ class TestController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur interne du serveur'
+            ], 500);
+        }
+    }
+
+    public function diagnostic()
+    {
+        try {
+            $diagnostic = [
+                'database_connection' => 'OK',
+                'users_table_exists' => \Illuminate\Support\Facades\Schema::hasTable('users'),
+                'oauth_clients_table_exists' => \Illuminate\Support\Facades\Schema::hasTable('oauth_clients'),
+                'oauth_access_tokens_table_exists' => \Illuminate\Support\Facades\Schema::hasTable('oauth_access_tokens'),
+                'oauth_personal_access_clients_table_exists' => \Illuminate\Support\Facades\Schema::hasTable('oauth_personal_access_clients'),
+                'users_count' => \App\Models\User::count(),
+                'oauth_clients_count' => \Illuminate\Support\Facades\DB::table('oauth_clients')->count(),
+                'personal_access_clients_count' => \Illuminate\Support\Facades\DB::table('oauth_personal_access_clients')->count(),
+                'admin_user_exists' => \App\Models\User::where('email', 'admin@example.com')->exists(),
+                'passport_keys_exist' => [
+                    'private' => file_exists(storage_path('oauth-private.key')),
+                    'public' => file_exists(storage_path('oauth-public.key'))
+                ]
+            ];
+
+            // Vérifier l'utilisateur admin spécifiquement
+            $adminUser = \App\Models\User::where('email', 'admin@example.com')->first();
+            if ($adminUser) {
+                $diagnostic['admin_user_details'] = [
+                    'id' => $adminUser->id,
+                    'nom' => $adminUser->nom,
+                    'prenom' => $adminUser->prenom,
+                    'type' => $adminUser->type,
+                    'tokens_count' => $adminUser->tokens()->count()
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Diagnostic système',
+                'data' => $diagnostic
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du diagnostic',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

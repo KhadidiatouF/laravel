@@ -32,6 +32,9 @@ Route::get('/api/documentation', function () {
 // Login (obtenir token)
 Route::post('/login', [TestController::class, 'login']);
 
+// Route de diagnostic
+Route::get('/diagnostic', [TestController::class, 'diagnostic']);
+
 // API Version 1
 Route::prefix('v1')->middleware(['rating'])->group(function () {
 
