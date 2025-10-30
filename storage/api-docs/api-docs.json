@@ -604,6 +604,20 @@
                                         "type": "number",
                                         "example": 10000
                                     },
+                                    "dateDebutBlocage": {
+                                        "description": "Date de début du blocage (pour comptes épargne)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-10-30",
+                                        "nullable": true
+                                    },
+                                    "dateFinBlocage": {
+                                        "description": "Date de fin du blocage (doit être postérieure à dateDebutBlocage)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-11-02",
+                                        "nullable": true
+                                    },
                                     "client": {
                                         "properties": {
                                             "id": {
@@ -1663,16 +1677,17 @@
                             "dateDebutBlocage": {
                                 "type": "string",
                                 "format": "date-time",
-                                "example": "2025-10-25T17:33:20Z"
+                                "example": "2025-10-30T12:00:00Z"
                             },
                             "dateFinBlocage": {
                                 "type": "string",
                                 "format": "date-time",
-                                "example": "2025-11-25T17:33:20Z"
+                                "example": "2025-11-02T12:00:00Z"
                             },
-                            "dureeRestante": {
+                            "dureeBlocageJours": {
+                                "description": "Durée du blocage en jours",
                                 "type": "integer",
-                                "example": 30
+                                "example": 3
                             }
                         },
                         "type": "object",

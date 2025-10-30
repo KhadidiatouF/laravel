@@ -55,9 +55,9 @@ use App\Events\CompteCreated;
  *     @OA\Property(property="motifBlocage", type="string", nullable=true, example=null),
  *     @OA\Property(property="informationsBlocage", type="object", nullable=true,
  *         description="Informations de blocage pour les comptes épargne bloqués",
- *         @OA\Property(property="dateDebutBlocage", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
- *         @OA\Property(property="dateFinBlocage", type="string", format="date-time", example="2025-11-25T17:33:20Z"),
- *         @OA\Property(property="dureeRestante", type="integer", example=30)
+ *         @OA\Property(property="dateDebutBlocage", type="string", format="date-time", example="2025-10-30T12:00:00Z"),
+ *         @OA\Property(property="dateFinBlocage", type="string", format="date-time", example="2025-11-02T12:00:00Z"),
+ *         @OA\Property(property="dureeBlocageJours", type="integer", example=3, description="Durée du blocage en jours")
  *     ),
  *     @OA\Property(property="metadata", type="object",
  *         @OA\Property(property="derniereModification", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
@@ -286,6 +286,8 @@ class CompteController extends Controller
      *             @OA\Property(property="soldeInitial", type="number", minimum=10000, example=500000),
      *             @OA\Property(property="devise", type="string", enum={"FCFA", "XOF", "EUR", "USD"}, example="FCFA"),
      *             @OA\Property(property="solde", type="number", example=10000),
+     *             @OA\Property(property="dateDebutBlocage", type="string", format="date", nullable=true, example="2025-10-30", description="Date de début du blocage (pour comptes épargne)"),
+     *             @OA\Property(property="dateFinBlocage", type="string", format="date", nullable=true, example="2025-11-02", description="Date de fin du blocage (doit être postérieure à dateDebutBlocage)"),
      *             @OA\Property(property="client", type="object",
      *                 @OA\Property(property="id", type="string", format="uuid", nullable=true, example=null),
      *                 @OA\Property(property="titulaire", type="string", example="Hawa BB Wane"),
@@ -356,12 +358,36 @@ class CompteController extends Controller
             ]);
         }
 
+        // Calculer la durée du blocage si c'est un compte épargne
+        $dureeBlocage = null;
+        $dateDebutBlocage = null;
+        $dateFinBlocage = null;
+        $statutInitial = 'actif';
+
+        if ($validated['type'] === 'epargne') {
+            $dateDebutBlocage = $validated['dateDebutBlocage'];
+            $dateFinBlocage = $validated['dateFinBlocage'];
+
+            // Calculer la durée en jours
+            $dateDebut = \Carbon\Carbon::parse($dateDebutBlocage);
+            $dateFin = \Carbon\Carbon::parse($dateFinBlocage);
+            $dureeBlocage = $dateDebut->diffInDays($dateFin);
+
+            // Si la date de début de blocage est aujourd'hui ou dans le passé, bloquer immédiatement
+            if ($dateDebut->isToday() || $dateDebut->isPast()) {
+                $statutInitial = 'bloqué';
+            }
+        }
+
         // Créer le compte
         $compte = Compte::create([
             'titulaire' => $client->id,
             'type' => $validated['type'],
-            'statut' => 'actif',
+            'statut' => $statutInitial,
             'date_creation' => now(),
+            'date_debut_bloquage' => $dateDebutBlocage,
+            'date_fin_bloquage' => $dateFinBlocage,
+            'duree_bloquage_jours' => $dureeBlocage,
         ]);
 
         // Créer une transaction initiale pour le solde
