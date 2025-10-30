@@ -40,23 +40,6 @@ use App\Events\CompteCreated;
  * )
  *
  * @OA\Schema(
- *     schema="ClientDetail",
- *     type="object",
- *     title="Client",
- *     description="Objet représentant un client de la banque",
- *     @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440001"),
- *     @OA\Property(property="nom", type="string", example="Diallo"),
- *     @OA\Property(property="prenom", type="string", example="Mamadou"),
- *     @OA\Property(property="email", type="string", format="email", example="mamadou.diallo@example.com"),
- *     @OA\Property(property="telephone", type="string", example="+221771234567"),
- *     @OA\Property(property="adresse", type="string", example="Dakar, Sénégal"),
- *     @OA\Property(property="nci", type="string", example="1234567890123A", nullable=true),
- *     @OA\Property(property="type", type="string", enum={"client"}, example="client"),
- *     @OA\Property(property="code_verification", type="string", nullable=true, example="0AjbUW"),
- *     @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-25T17:33:20Z")
- * )
- *
- * @OA\Schema(
  *     schema="Compte",
  *     type="object",
  *     title="Compte",
@@ -99,49 +82,49 @@ class CompteController extends Controller
      *         in="query",
      *         description="Numéro de page",
      *         required=false,
-     *         @OA\Schema(type="integer", default=1, example=1)
+     *         @OA\Schema(type="integer", default=1)
      *     ),
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         description="Nombre d'éléments par page",
      *         required=false,
-     *         @OA\Schema(type="integer", default=10, maximum=100, example=10)
+     *         @OA\Schema(type="integer", default=10, maximum=100)
      *     ),
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
      *         description="Filtrer par type",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"courant", "epargne", "cheque"}, example="courant")
+     *         @OA\Schema(type="string", enum={"courant", "epargne", "cheque"})
      *     ),
      *     @OA\Parameter(
      *         name="statut",
      *         in="query",
      *         description="Filtrer par statut",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"actif", "inactif", "bloqué"}, example="actif")
+     *         @OA\Schema(type="string", enum={"actif", "inactif", "bloqué"})
      *     ),
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Recherche par titulaire, numéro de compte ou numéro de téléphone",
+     *         description="Recherche par titulaire ou numéro",
      *         required=false,
-     *         @OA\Schema(type="string", example="+221771234567")
+     *         @OA\Schema(type="string")
      *     ),
      *     @OA\Parameter(
      *         name="sort",
      *         in="query",
      *         description="Tri",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"dateCreation", "solde", "titulaire"}, example="dateCreation")
+     *         @OA\Schema(type="string", enum={"dateCreation", "solde", "titulaire"})
      *     ),
      *     @OA\Parameter(
      *         name="order",
      *         in="query",
      *         description="Ordre",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc")
+     *         @OA\Schema(type="string", enum={"asc", "desc"})
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -204,8 +187,7 @@ class CompteController extends Controller
                 $q->where('numCompte', 'like', "%{$search}%")
                   ->orWhereHas('client', function ($clientQuery) use ($search) {
                       $clientQuery->where('nom', 'like', "%{$search}%")
-                                  ->orWhere('prenom', 'like', "%{$search}%")
-                                  ->orWhere('telephone', 'like', "%{$search}%");
+                                  ->orWhere('prenom', 'like', "%{$search}%");
                   });
             });
         }
@@ -303,8 +285,8 @@ class CompteController extends Controller
      *             @OA\Property(property="type", type="string", enum={"cheque", "courant", "epargne"}, example="courant"),
      *             @OA\Property(property="soldeInitial", type="number", minimum=10000, example=500000),
      *             @OA\Property(property="devise", type="string", enum={"FCFA", "XOF", "EUR", "USD"}, example="FCFA"),
+     *             @OA\Property(property="solde", type="number", example=10000),
      *             @OA\Property(property="client", type="object",
-     *                 required={"titulaire", "email", "telephone", "adresse"},
      *                 @OA\Property(property="id", type="string", format="uuid", nullable=true, example=null),
      *                 @OA\Property(property="titulaire", type="string", example="Hawa BB Wane"),
      *                 @OA\Property(property="email", type="string", format="email", example="cheikh.sy@example.com"),
@@ -436,12 +418,6 @@ class CompteController extends Controller
     public function show(string $id)
     {
         $user = Auth::guard('api')->user();
-
-        // Vérifier d'abord si l'ID est valide (format UUID)
-        if (!\Illuminate\Support\Str::isUuid($id)) {
-            return $this->errorResponse('Format d\'ID invalide.', 400);
-        }
-
         $compte = Compte::with('client')->find($id);
 
         // Si le compte n'est pas trouvé localement et qu'il pourrait être archivé
@@ -454,7 +430,7 @@ class CompteController extends Controller
 
         // Vérifier les permissions : client ne peut voir que ses propres comptes
         if ($user->type === 'client' && $compte->titulaire !== $user->id) {
-            return $this->errorResponse('Accès refusé à ce compte. Vous ne pouvez consulter que vos propres comptes.', 403);
+            return $this->errorResponse('Accès refusé à ce compte.', 403);
         }
 
         return $this->successResponse(new CompteResource($compte));
@@ -478,9 +454,8 @@ class CompteController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"type"},
-     *             @OA\Property(property="type", type="string", enum={"courant", "epargne", "cheque"}, example="courant"),
-     *             @OA\Property(property="statut", type="string", enum={"actif", "inactif"}, example="actif")
+     *             @OA\Property(property="type", type="string", enum={"courant", "epargne", "bloqué", "cheque"}),
+     *             @OA\Property(property="statut", type="string", enum={"actif", "inactif", "fermé"})
      *         )
      *     ),
      *     @OA\Response(
@@ -501,27 +476,17 @@ class CompteController extends Controller
     public function update(Request $request, string $id)
     {
         $user = Auth::guard('api')->user();
-
-        // Vérifier d'abord si l'ID est valide (format UUID)
-        if (!\Illuminate\Support\Str::isUuid($id)) {
-            return $this->errorResponse('Format d\'ID invalide.', 400);
-        }
-
-        $compte = Compte::find($id);
-
-        if (!$compte) {
-            return $this->errorResponse('Compte non trouvé.', 404);
-        }
+        $compte = Compte::findOrFail($id);
 
         // Vérifier les permissions
         if ($user->type === 'client') {
             // Client ne peut modifier que ses propres comptes
             if ($compte->titulaire !== $user->id) {
-                return $this->errorResponse('Accès refusé à ce compte. Vous ne pouvez modifier que vos propres comptes.', 403);
+                return $this->errorResponse('Accès refusé à ce compte.', 403);
             }
             // Client ne peut modifier que le type (pas le statut)
             $validated = $request->validate([
-                'type' => ['required', 'in:courant,epargne,cheque'],
+                'type' => ['sometimes', 'in:courant,epargne,cheque'],
             ]);
         } else {
             // Admin peut tout modifier
@@ -535,7 +500,7 @@ class CompteController extends Controller
 
         return $this->successResponse(
             new CompteResource($compte),
-            'Informations du compte mises à jour avec succès'
+            'Compte mis à jour avec succès'
         );
     }
 
