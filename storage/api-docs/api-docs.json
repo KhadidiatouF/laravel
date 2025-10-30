@@ -436,7 +436,8 @@
                         "required": false,
                         "schema": {
                             "type": "integer",
-                            "default": 1
+                            "default": 1,
+                            "example": 1
                         }
                     },
                     {
@@ -447,7 +448,8 @@
                         "schema": {
                             "type": "integer",
                             "default": 10,
-                            "maximum": 100
+                            "maximum": 100,
+                            "example": 10
                         }
                     },
                     {
@@ -461,7 +463,8 @@
                                 "courant",
                                 "epargne",
                                 "cheque"
-                            ]
+                            ],
+                            "example": "courant"
                         }
                     },
                     {
@@ -475,16 +478,18 @@
                                 "actif",
                                 "inactif",
                                 "bloqué"
-                            ]
+                            ],
+                            "example": "actif"
                         }
                     },
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Recherche par titulaire ou numéro",
+                        "description": "Recherche par titulaire, numéro de compte ou numéro de téléphone",
                         "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "+221771234567"
                         }
                     },
                     {
@@ -498,7 +503,8 @@
                                 "dateCreation",
                                 "solde",
                                 "titulaire"
-                            ]
+                            ],
+                            "example": "dateCreation"
                         }
                     },
                     {
@@ -511,7 +517,8 @@
                             "enum": [
                                 "asc",
                                 "desc"
-                            ]
+                            ],
+                            "example": "desc"
                         }
                     }
                 ],
@@ -600,11 +607,13 @@
                                         ],
                                         "example": "FCFA"
                                     },
-                                    "solde": {
-                                        "type": "number",
-                                        "example": 10000
-                                    },
                                     "client": {
+                                        "required": [
+                                            "titulaire",
+                                            "email",
+                                            "telephone",
+                                            "adresse"
+                                        ],
                                         "properties": {
                                             "id": {
                                                 "type": "string",
@@ -867,23 +876,26 @@
                     "content": {
                         "application/json": {
                             "schema": {
+                                "required": [
+                                    "type"
+                                ],
                                 "properties": {
                                     "type": {
                                         "type": "string",
                                         "enum": [
                                             "courant",
                                             "epargne",
-                                            "bloqué",
                                             "cheque"
-                                        ]
+                                        ],
+                                        "example": "courant"
                                     },
                                     "statut": {
                                         "type": "string",
                                         "enum": [
                                             "actif",
-                                            "inactif",
-                                            "fermé"
-                                        ]
+                                            "inactif"
+                                        ],
+                                        "example": "actif"
                                     }
                                 },
                                 "type": "object"
@@ -1593,6 +1605,61 @@
                     "next": {
                         "type": "string",
                         "example": "http://api.banque.example.com/api/v1/comptes?page=2"
+                    }
+                },
+                "type": "object"
+            },
+            "ClientDetail": {
+                "title": "Client",
+                "description": "Objet représentant un client de la banque",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440001"
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "Diallo"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "example": "Mamadou"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "mamadou.diallo@example.com"
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "example": "+221771234567"
+                    },
+                    "adresse": {
+                        "type": "string",
+                        "example": "Dakar, Sénégal"
+                    },
+                    "nci": {
+                        "type": "string",
+                        "example": "1234567890123A",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "client"
+                        ],
+                        "example": "client"
+                    },
+                    "code_verification": {
+                        "type": "string",
+                        "example": "0AjbUW",
+                        "nullable": true
+                    },
+                    "dateCreation": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-10-25T17:33:20Z"
                     }
                 },
                 "type": "object"

@@ -40,7 +40,7 @@ use App\Events\CompteCreated;
  * )
  *
  * @OA\Schema(
- *     schema="Client",
+ *     schema="ClientDetail",
  *     type="object",
  *     title="Client",
  *     description="Objet représentant un client de la banque",
