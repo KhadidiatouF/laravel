@@ -25,6 +25,7 @@ class AdminFactory extends Factory
             'adresse' => fake()->city(),
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
             'type' => 'admin',
+            'code_verification' => null,
         ];
     }
 }

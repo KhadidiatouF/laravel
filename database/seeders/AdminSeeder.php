@@ -12,7 +12,7 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\Admin::create([
+        \App\Models\User::create([
             'nom' => 'Admin',
             'prenom' => 'System',
             'email' => 'admin@example.com',
@@ -20,6 +20,7 @@ class AdminSeeder extends Seeder
             'adresse' => 'Dakar, Sénégal',
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
             'type' => 'admin',
+            'code_verification' => null,
         ]);
     }
 }
