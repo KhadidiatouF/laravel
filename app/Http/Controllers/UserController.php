@@ -31,29 +31,96 @@ class UserController extends Controller
     use ApiResponseTrait;
     /**
      * @OA\Get(
-     *     path="/api/users",
+     *     path="/api/v1/users",
      *     summary="Lister tous les utilisateurs",
      *     tags={"Users"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Numéro de page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Nombre d'éléments par page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10, maximum=100)
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Filtrer par type d'utilisateur",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"admin", "client"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Recherche par nom, prénom ou email",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Liste des utilisateurs",
      *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(ref="#/components/schemas/User")
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User")),
+     *             @OA\Property(property="pagination", ref="#/components/schemas/Pagination"),
+     *             @OA\Property(property="links", ref="#/components/schemas/Links")
      *         )
      *     ),
-     *     @OA\Response(response=401, description="Non autorisé")
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé - Admin requis")
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        return User::all();
+        $user = auth()->user();
+
+        // Vérifier les permissions (seulement admin peut lister tous les utilisateurs)
+        if ($user->type !== 'admin') {
+            return $this->errorResponse('Accès refusé. Réservé aux administrateurs.', 403);
+        }
+
+        // Validation des paramètres
+        $validated = $request->validate([
+            'page' => 'integer|min:1',
+            'limit' => 'integer|min:1|max:100',
+            'type' => ['nullable', \Illuminate\Validation\Rule::in(['admin', 'client'])],
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        $query = User::query();
+
+        // Appliquer les filtres
+        if (!empty($validated['type'])) {
+            $query->where('type', $validated['type']);
+        }
+
+        if (!empty($validated['search'])) {
+            $search = $validated['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('nom', 'like', "%{$search}%")
+                  ->orWhere('prenom', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Pagination
+        $perPage = $validated['limit'] ?? 10;
+        $users = $query->paginate($perPage);
+
+        return $this->paginatedResponse($users);
     }
 
     /**
      * @OA\Post(
-     *     path="/api/users",
+     *     path="/api/v1/users",
      *     summary="Créer un nouvel utilisateur",
      *     tags={"Users"},
      *     security={{"bearerAuth":{}}},
@@ -73,14 +140,27 @@ class UserController extends Controller
      *     @OA\Response(
      *         response=201,
      *         description="Utilisateur créé",
-     *         @OA\JsonContent(ref="#/components/schemas/User")
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Utilisateur créé avec succès"),
+     *             @OA\Property(property="data", ref="#/components/schemas/User")
+     *         )
      *     ),
      *     @OA\Response(response=400, description="Données invalides"),
-     *     @OA\Response(response=401, description="Non autorisé")
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé - Admin requis")
      * )
      */
     public function store(Request $request)
     {
+        $currentUser = auth()->user();
+
+        // Vérifier les permissions (seulement admin peut créer des utilisateurs)
+        if ($currentUser->type !== 'admin') {
+            return $this->errorResponse('Seul un administrateur peut créer un utilisateur.', 403);
+        }
+
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
@@ -95,7 +175,7 @@ class UserController extends Controller
 
         $user = User::create($validated);
 
-        return response()->json($user, 201);
+        return $this->successResponse($user, 'Utilisateur créé avec succès', 201);
     }
 
     /**
@@ -114,16 +194,28 @@ class UserController extends Controller
      *     @OA\Response(
      *         response=200,
      *         description="Détails de l'utilisateur",
-     *         @OA\JsonContent(ref="#/components/schemas/User")
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/User")
+     *         )
      *     ),
      *     @OA\Response(response=404, description="Utilisateur non trouvé"),
-     *     @OA\Response(response=401, description="Non autorisé")
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé")
      * )
      */
     public function show($id)
     {
+        $currentUser = auth()->user();
+
+        // Vérifier les permissions (admin ou utilisateur propriétaire)
+        if ($currentUser->type === 'client' && $currentUser->id !== $id) {
+            return $this->errorResponse('Accès refusé à cet utilisateur.', 403);
+        }
+
         $user = User::findOrFail($id);
-        return response()->json($user);
+        return $this->successResponse($user);
     }
 
     /**
@@ -154,15 +246,28 @@ class UserController extends Controller
      *     @OA\Response(
      *         response=200,
      *         description="Utilisateur mis à jour",
-     *         @OA\JsonContent(ref="#/components/schemas/User")
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Utilisateur mis à jour avec succès"),
+     *             @OA\Property(property="data", ref="#/components/schemas/User")
+     *         )
      *     ),
      *     @OA\Response(response=404, description="Utilisateur non trouvé"),
      *     @OA\Response(response=400, description="Données invalides"),
-     *     @OA\Response(response=401, description="Non autorisé")
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé")
      * )
      */
     public function update(Request $request, $id)
     {
+        $currentUser = auth()->user();
+
+        // Vérifier les permissions (admin ou utilisateur propriétaire)
+        if ($currentUser->type === 'client' && $currentUser->id !== $id) {
+            return $this->errorResponse('Accès refusé à cet utilisateur.', 403);
+        }
+
         $user = User::findOrFail($id);
 
         $validated = $request->validate([
@@ -181,12 +286,12 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return response()->json($user);
+        return $this->successResponse($user, 'Utilisateur mis à jour avec succès');
     }
 
     /**
      * @OA\Delete(
-     *     path="/api/v1/users/{id}",
+     *     path="/api/users/{id}",
      *     summary="Supprimer un utilisateur",
      *     tags={"Users"},
      *     security={{"bearerAuth":{}}},

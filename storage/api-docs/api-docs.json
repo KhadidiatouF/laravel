@@ -420,6 +420,63 @@
                 ]
             }
         },
+        "/api/v1/clients/telephone/{telephone}": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Récupérer un client par numéro de téléphone",
+                "description": "Récupérer un client par numéro de téléphone",
+                "operationId": "2a27add946f98ccb62c3e41aefc5d64a",
+                "parameters": [
+                    {
+                        "name": "telephone",
+                        "in": "path",
+                        "description": "Numéro de téléphone du client",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "+221771234567"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Client"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client non trouvé"
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé - Admin requis"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/comptes": {
             "get": {
                 "tags": [
@@ -801,23 +858,23 @@
                 ]
             }
         },
-        "/api/v1/comptes/{id}": {
+        "/api/v1/comptes/{numero}": {
             "get": {
                 "tags": [
                     "Comptes"
                 ],
-                "summary": "Afficher un compte spécifique",
-                "description": "Afficher un compte spécifique",
-                "operationId": "eb5f0388e07f74eea9f4a8286c080ad4",
+                "summary": "Afficher un compte spécifique par numéro",
+                "description": "Afficher un compte spécifique par numéro",
+                "operationId": "0210219b689fdc768ead8c77093b3cc2",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "numero",
                         "in": "path",
-                        "description": "ID du compte",
+                        "description": "Numéro du compte (ex: C-20251030-ABCD)",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "format": "uuid"
+                            "example": "C-20251030-ABCD"
                         }
                     }
                 ],
@@ -856,7 +913,9 @@
                         "bearerAuth": []
                     }
                 ]
-            },
+            }
+        },
+        "/api/v1/comptes/{id}": {
             "put": {
                 "tags": [
                     "Comptes"
@@ -1201,29 +1260,92 @@
                 }
             }
         },
-        "/api/users": {
+        "/api/v1/users": {
             "get": {
                 "tags": [
                     "Users"
                 ],
                 "summary": "Lister tous les utilisateurs",
-                "operationId": "c457726701591d1183b53aa71fc13441",
+                "operationId": "3ab81e3f9b24b4f36ab08d72349ac632",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type d'utilisateur",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "admin",
+                                "client"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche par nom, prénom ou email",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Liste des utilisateurs",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/User"
-                                    }
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/User"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "$ref": "#/components/schemas/Pagination"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/Links"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     },
                     "401": {
                         "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé - Admin requis"
                     }
                 },
                 "security": [
@@ -1237,7 +1359,7 @@
                     "Users"
                 ],
                 "summary": "Créer un nouvel utilisateur",
-                "operationId": "592819a0265360b2014512d6dbfaf0e7",
+                "operationId": "ba548b97148bb5c0d8cab3bc3f128bfd",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1290,7 +1412,20 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/User"
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur créé avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -1300,6 +1435,9 @@
                     },
                     "401": {
                         "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé - Admin requis"
                     }
                 },
                 "security": [
@@ -1334,7 +1472,16 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/User"
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -1344,6 +1491,9 @@
                     },
                     "401": {
                         "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
                     }
                 },
                 "security": [
@@ -1415,7 +1565,20 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/User"
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -1428,6 +1591,9 @@
                     },
                     "401": {
                         "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
                     }
                 },
                 "security": [
@@ -1435,15 +1601,13 @@
                         "bearerAuth": []
                     }
                 ]
-            }
-        },
-        "/api/v1/users/{id}": {
+            },
             "delete": {
                 "tags": [
                     "Users"
                 ],
                 "summary": "Supprimer un utilisateur",
-                "operationId": "c30c64b8b7730b65c7714c9af4a6f5fa",
+                "operationId": "fa56cffde745d3f152f95cbacd936c0b",
                 "parameters": [
                     {
                         "name": "id",

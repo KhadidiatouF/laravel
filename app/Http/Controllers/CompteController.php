@@ -298,8 +298,6 @@ class CompteController extends Controller
      *                 @OA\Property(property="adresse", type="string", example="Dakar, Sénégal"),
      *                 @OA\Property(property="nci", type="string", example="1234567890123A", nullable=true)
      *             ),
-     *             @OA\Property(property="dateDebutBlocage", type="string", format="date", nullable=true, example="2025-10-30", description="Date de début du blocage (pour comptes épargne)"),
-     *             @OA\Property(property="dateFinBlocage", type="string", format="date", nullable=true, example="2025-11-02", description="Date de fin du blocage (doit être postérieure à dateDebutBlocage)")
      *         )
      *     ),
      *     @OA\Response(
@@ -407,7 +405,6 @@ class CompteController extends Controller
             \Illuminate\Support\Facades\Log::info('=== ENVOI EMAIL ===');
             \Illuminate\Support\Facades\Log::info('Destinataire: ' . $client->email);
             \Illuminate\Support\Facades\Log::info('Mailer utilisé: ' . config('mail.default'));
-            \Illuminate\Support\Facades\Log::info('Host SMTP: ' . config('mail.mailers.smtp.host'));
 
             if (!empty($validated['client']['id'])) {
                 // Client existant - pas de mot de passe généré
@@ -440,11 +437,11 @@ class CompteController extends Controller
                     $messageContent .= "Veuillez le changer lors de votre première connexion.\n\n";
                 }
 
-                $messageContent .= "Cordialement,\nBanque Example";
+                $messageContent .= "Cordialement,\nBanque API";
 
                 Mail::raw($messageContent, function ($message) use ($client) {
                     $message->to($client->email)
-                            ->subject('Votre compte bancaire a été créé - Banque Example');
+                            ->subject('Votre compte bancaire a été créé - Banque API');
                 });
 
                 \Illuminate\Support\Facades\Log::info('✅ Email de fallback envoyé avec succès');
@@ -471,19 +468,19 @@ class CompteController extends Controller
     }
 
     /**
-     * Afficher un compte spécifique
+     * Afficher un compte spécifique par numéro
      *
      * @OA\Get(
-     *     path="/api/v1/comptes/{id}",
-     *     summary="Afficher un compte spécifique",
+     *     path="/api/v1/comptes/{numero}",
+     *     summary="Afficher un compte spécifique par numéro",
      *     tags={"Comptes"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
-     *         name="id",
+     *         name="numero",
      *         in="path",
      *         required=true,
-     *         description="ID du compte",
-     *         @OA\Schema(type="string", format="uuid")
+     *         description="Numéro du compte (ex: C-20251030-ABCD)",
+     *         @OA\Schema(type="string", example="C-20251030-ABCD")
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -499,10 +496,17 @@ class CompteController extends Controller
      *     @OA\Response(response=403, description="Accès refusé")
      * )
      */
-    public function show(string $id)
+    public function show(string $numero)
     {
         $user = Auth::guard('api')->user();
-        $compte = Compte::with('client')->find($id);
+
+        // Essayer d'abord de trouver par ID (UUID)
+        $compte = Compte::with('client')->find($numero);
+
+        // Si pas trouvé par ID, essayer par numéro de compte
+        if (!$compte) {
+            $compte = Compte::with('client')->where('numCompte', $numero)->first();
+        }
 
         // Si le compte n'est pas trouvé localement et qu'il pourrait être archivé
         if (!$compte) {

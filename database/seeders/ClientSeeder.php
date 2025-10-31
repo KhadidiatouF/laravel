@@ -16,7 +16,7 @@ class ClientSeeder extends Seeder
             'nom' => 'Client',
             'prenom' => 'Test',
             'email' => 'client@example.com',
-            'telephone' => '+221771234570',
+            'telephone' => '+221773334567',
             'adresse' => 'Dakar, Sénégal',
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
             'type' => 'client',

@@ -49,10 +49,18 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
         ],
 
-        'mailjet' => [
-            'transport' => 'mailjet',
-            'key' => env('MAILJET_APIKEY'),
-            'secret' => env('MAILJET_APISECRET'),
+        'sendgrid' => [
+        'transport' => 'smtp',
+        'host' => 'smtp.sendgrid.net',
+        'port' => 587,
+        'encryption' => 'tls',
+        'username' => env('MAIL_USERNAME'),
+        'password' => env('MAIL_PASSWORD'),
+        ],
+
+
+        'resend' => [
+            'transport' => 'resend',
         ],
 
         'log' => [

@@ -303,6 +303,52 @@ class ClientController extends Controller
     }
 
     /**
+     * Récupérer un client par numéro de téléphone
+     *
+     * @OA\Get(
+     *     path="/api/v1/clients/telephone/{telephone}",
+     *     summary="Récupérer un client par numéro de téléphone",
+     *     tags={"Clients"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="telephone",
+     *         in="path",
+     *         required=true,
+     *         description="Numéro de téléphone du client",
+     *         @OA\Schema(type="string", example="+221771234567")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Client trouvé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/Client")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Client non trouvé"),
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé - Admin requis")
+     * )
+     */
+    public function findByPhone(string $telephone)
+    {
+        $user = Auth::user();
+
+        if ($user->type !== 'admin') {
+            return $this->errorResponse('Accès refusé. Réservé aux administrateurs.', 403);
+        }
+
+        $client = Client::with('comptes')->where('telephone', $telephone)->first();
+
+        if (!$client) {
+            return $this->errorResponse('Client non trouvé avec ce numéro de téléphone.', 404);
+        }
+
+        return $this->successResponse(new ClientResource($client));
+    }
+
+    /**
      * Supprimer un client
      *
      * @OA\Delete(

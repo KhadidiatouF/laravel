@@ -353,4 +353,38 @@ class TestController extends Controller
             ], 500);
         }
     }
+
+    public function testEmail()
+    {
+        try {
+            \Illuminate\Support\Facades\Log::info('=== TEST EMAIL ===');
+            \Illuminate\Support\Facades\Log::info('Mailer: ' . config('mail.default'));
+            \Illuminate\Support\Facades\Log::info('Host: ' . config('mail.mailers.smtp.host'));
+
+            \Illuminate\Support\Facades\Mail::raw('Test Gmail SMTP - Ceci est un test depuis Laravel 🚀', function ($message) {
+                $message->to('jamiral2019@gmail.com')
+                        ->subject('Test Gmail SMTP - Laravel');
+            });
+
+            \Illuminate\Support\Facades\Log::info('✅ Email de test envoyé');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email de test envoyé avec succès',
+                'mailer' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host')
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('❌ Erreur test email: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du test email',
+                'error' => $e->getMessage(),
+                'mailer' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host')
+            ], 500);
+        }
+    }
 }
