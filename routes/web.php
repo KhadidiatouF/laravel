@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 // */
 
 Route::get('/', function () {
-    return response()->json(['message' => 'API Laravel fonctionne', 'status' => 'OK', 'timestamp' => now()]);
+    return view('welcome');
 });
 
 use Illuminate\Support\Facades\Mail;
