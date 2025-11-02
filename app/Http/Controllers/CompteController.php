@@ -525,6 +525,11 @@ class CompteController extends Controller
             return $this->errorResponse('Accès refusé à ce compte.', 403);
         }
 
+        // Admin ne peut voir que les comptes actifs par défaut
+        if ($user->type === 'admin' && $compte->statut !== 'actif') {
+            return $this->errorResponse('Seul un compte actif peut être consulté.', 403);
+        }
+
         return $this->successResponse(new CompteResource($compte));
     }
 
@@ -581,7 +586,10 @@ class CompteController extends Controller
                 'type' => ['sometimes', 'in:courant,epargne,cheque'],
             ]);
         } else {
-            // Admin peut tout modifier
+            // Admin peut tout modifier mais seulement sur les comptes actifs
+            if ($compte->statut !== 'actif') {
+                return $this->errorResponse('Seul un compte actif peut être modifié.', 403);
+            }
             $validated = $request->validate([
                 'type' => ['sometimes', 'in:courant,epargne,cheque'],
                 'statut' => ['sometimes', 'in:actif,inactif,bloqué'],
@@ -647,6 +655,11 @@ class CompteController extends Controller
             return $this->errorResponse('Accès refusé aux comptes de ce client.', 403);
         }
 
+        // Admin ne peut voir que les comptes actifs
+        if ($user->type === 'admin' && $comptes->where('statut', '!=', 'actif')->count() > 0) {
+            $comptes = $comptes->where('statut', 'actif');
+        }
+
         if ($comptes->isEmpty()) {
             return $this->errorResponse('Aucun compte actif trouvé pour ce numéro de téléphone.', 404);
         }
@@ -696,6 +709,16 @@ class CompteController extends Controller
         }
 
         $compte = Compte::findOrFail($id);
+
+        // Vérifier que le compte appartient à un client (pas à l'admin lui-même)
+        if ($compte->titulaire === $user->id) {
+            return $this->errorResponse('Vous ne pouvez pas archiver votre propre compte.', 403);
+        }
+
+        // Vérifier que le compte appartient à un client (pas à l'admin lui-même)
+        if ($compte->titulaire === $user->id) {
+            return $this->errorResponse('Vous ne pouvez pas archiver votre propre compte.', 403);
+        }
 
         // Vérifier que le compte est actif (seuls les comptes actifs peuvent être archivés)
         if ($compte->statut !== 'actif') {
