@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Compte;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -80,7 +81,11 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $user = auth()->user();
+        $user = Auth::guard('api')->user();
+
+        if (!$user) {
+            return $this->errorResponse('Utilisateur non authentifié.', 401);
+        }
 
         // Vérifier les permissions (seulement admin peut lister tous les utilisateurs)
         if ($user->type !== 'admin') {
@@ -154,7 +159,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $currentUser = auth()->user();
+        $currentUser = Auth::guard('api')->user();
 
         // Vérifier les permissions (seulement admin peut créer des utilisateurs)
         if ($currentUser->type !== 'admin') {
@@ -207,7 +212,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $currentUser = auth()->user();
+        $currentUser = Auth::guard('api')->user();
 
         // Vérifier les permissions (admin ou utilisateur propriétaire)
         if ($currentUser->type === 'client' && $currentUser->id !== $id) {
@@ -261,7 +266,7 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $currentUser = auth()->user();
+        $currentUser = Auth::guard('api')->user();
 
         // Vérifier les permissions (admin ou utilisateur propriétaire)
         if ($currentUser->type === 'client' && $currentUser->id !== $id) {
@@ -318,7 +323,7 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        $currentUser = auth()->user();
+        $currentUser = Auth::guard('api')->user();
 
         // Vérifier les permissions (seulement admin peut supprimer)
         if ($currentUser->type !== 'admin') {

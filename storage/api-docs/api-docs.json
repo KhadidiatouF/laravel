@@ -49,7 +49,16 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Recherche par nom, prénom ou email",
+                        "description": "Recherche par nom, prénom, email ou téléphone",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "telephone",
+                        "in": "query",
+                        "description": "Filtrer par numéro de téléphone",
                         "required": false,
                         "schema": {
                             "type": "string"
@@ -425,8 +434,8 @@
                 "tags": [
                     "Clients"
                 ],
-                "summary": "Récupérer un client par numéro de téléphone",
-                "description": "Récupérer un client par numéro de téléphone",
+                "summary": "Récupérer un client à partir du numéro téléphone",
+                "description": "Récupérer un client à partir du numéro téléphone",
                 "operationId": "2a27add946f98ccb62c3e41aefc5d64a",
                 "parameters": [
                     {
@@ -863,7 +872,7 @@
                 "tags": [
                     "Comptes"
                 ],
-                "summary": "Afficher un compte spécifique par numéro",
+                "summary": "Détail de compte à partir du numéro",
                 "description": "Afficher un compte spécifique par numéro",
                 "operationId": "0210219b689fdc768ead8c77093b3cc2",
                 "parameters": [
@@ -1046,6 +1055,66 @@
                     },
                     "404": {
                         "description": "Compte non trouvé"
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/comptes/telephone/{telephone}": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Récupérer les comptes d'un client par numéro de téléphone",
+                "description": "Récupérer les comptes d'un client par numéro de téléphone",
+                "operationId": "62d6305ded7d44cbc38c6d3b0d6ad3ed",
+                "parameters": [
+                    {
+                        "name": "telephone",
+                        "in": "path",
+                        "description": "Numéro de téléphone du client",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "+221771234567"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comptes trouvés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Compte"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucun compte trouvé"
                     },
                     "401": {
                         "description": "Non autorisé"

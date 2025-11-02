@@ -472,7 +472,7 @@ class CompteController extends Controller
      *
      * @OA\Get(
      *     path="/api/v1/comptes/{numero}",
-     *     summary="Afficher un compte spécifique par numéro",
+     *     summary="Détail de compte à partir du numéro",
      *     tags={"Comptes"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -500,12 +500,16 @@ class CompteController extends Controller
     {
         $user = Auth::guard('api')->user();
 
-        // Essayer d'abord de trouver par ID (UUID)
-        $compte = Compte::with('client')->find($numero);
+        if (!$user) {
+            return $this->errorResponse('Utilisateur non authentifié.', 401);
+        }
 
-        // Si pas trouvé par ID, essayer par numéro de compte
+        // Essayer d'abord de trouver par numéro de compte
+        $compte = Compte::with('client')->where('numCompte', $numero)->first();
+
+        // Si pas trouvé par numéro, essayer par ID (UUID)
         if (!$compte) {
-            $compte = Compte::with('client')->where('numCompte', $numero)->first();
+            $compte = Compte::with('client')->find($numero);
         }
 
         // Si le compte n'est pas trouvé localement et qu'il pourrait être archivé
@@ -593,7 +597,68 @@ class CompteController extends Controller
     }
 
     /**
-     * Supprimer un compte 
+     * Récupérer les comptes d'un client par numéro de téléphone
+     *
+     * @OA\Get(
+     *     path="/api/v1/comptes/telephone/{telephone}",
+     *     summary="Récupérer les comptes d'un client par numéro de téléphone",
+     *     tags={"Comptes"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="telephone",
+     *         in="path",
+     *         required=true,
+     *         description="Numéro de téléphone du client",
+     *         @OA\Schema(type="string", example="+221771234567")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Comptes trouvés",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Compte"))
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Aucun compte trouvé"),
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé")
+     * )
+     */
+    public function findByPhone(string $telephone)
+    {
+        $user = Auth::guard('api')->user();
+
+        // Trouver le client par numéro de téléphone
+        $client = Client::where('telephone', $telephone)->first();
+
+        if (!$client) {
+            return $this->errorResponse('Client non trouvé avec ce numéro de téléphone.', 404);
+        }
+
+        // Récupérer les comptes du client
+        $comptes = Compte::with('client')
+            ->where('titulaire', $client->id)
+            ->where('statut', 'actif')
+            ->get();
+
+        // Vérifier les permissions : client ne peut voir que ses propres comptes
+        if ($user->type === 'client' && $client->id !== $user->id) {
+            return $this->errorResponse('Accès refusé aux comptes de ce client.', 403);
+        }
+
+        if ($comptes->isEmpty()) {
+            return $this->errorResponse('Aucun compte actif trouvé pour ce numéro de téléphone.', 404);
+        }
+
+        return $this->successResponse(
+            CompteResource::collection($comptes),
+            'Comptes récupérés avec succès'
+        );
+    }
+
+    /**
+     * Supprimer un compte
      *
      * @OA\Delete(
      *     path="/api/v1/comptes/{id}",

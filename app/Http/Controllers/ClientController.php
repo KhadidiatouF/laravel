@@ -59,7 +59,14 @@ class ClientController extends Controller
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Recherche par nom, prénom ou email",
+     *         description="Recherche par nom, prénom, email ou téléphone",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="telephone",
+     *         in="query",
+     *         description="Filtrer par numéro de téléphone",
      *         required=false,
      *         @OA\Schema(type="string")
      *     ),
@@ -80,7 +87,7 @@ class ClientController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
+        $user = Auth::guard('api')->user();
 
         if ($user->type !== 'admin') {
             return $this->errorResponse('Accès refusé. Réservé aux administrateurs.', 403);
@@ -91,16 +98,24 @@ class ClientController extends Controller
             'page' => 'integer|min:1',
             'limit' => 'integer|min:1|max:100',
             'search' => 'nullable|string|max:255',
+            'telephone' => 'nullable|string|max:20',
         ]);
 
         $query = Client::with('comptes');
 
+        // Filtre par téléphone spécifique
+        if (!empty($validated['telephone'])) {
+            $query->where('telephone', $validated['telephone']);
+        }
+
+        // Recherche générale (nom, prénom, email, téléphone)
         if (!empty($validated['search'])) {
             $search = $validated['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('nom', 'like', "%{$search}%")
                   ->orWhere('prenom', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('telephone', 'like', "%{$search}%");
             });
         }
 
@@ -142,7 +157,7 @@ class ClientController extends Controller
      */
     public function show(string $id)
     {
-        $user = Auth::user();
+        $user = Auth::guard('api')->user();
         $client = Client::with('comptes')->findOrFail($id);
 
         // Vérifier les permissions (admin ou client propriétaire)
@@ -201,7 +216,7 @@ class ClientController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
+        $user = Auth::guard('api')->user();
 
         if ($user->type !== 'admin') {
             return $this->errorResponse('Seul un administrateur peut créer un client.', 403);
@@ -278,7 +293,7 @@ class ClientController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $user = Auth::user();
+        $user = Auth::guard('api')->user();
         $client = Client::findOrFail($id);
 
         // Vérifier les permissions (admin ou client propriétaire)
@@ -303,11 +318,11 @@ class ClientController extends Controller
     }
 
     /**
-     * Récupérer un client par numéro de téléphone
+     * Récupérer un client à partir du numéro téléphone
      *
      * @OA\Get(
      *     path="/api/v1/clients/telephone/{telephone}",
-     *     summary="Récupérer un client par numéro de téléphone",
+     *     summary="Récupérer un client à partir du numéro téléphone",
      *     tags={"Clients"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -333,7 +348,7 @@ class ClientController extends Controller
      */
     public function findByPhone(string $telephone)
     {
-        $user = Auth::user();
+        $user = Auth::guard('api')->user();
 
         if ($user->type !== 'admin') {
             return $this->errorResponse('Accès refusé. Réservé aux administrateurs.', 403);
@@ -379,7 +394,7 @@ class ClientController extends Controller
      */
     public function destroy(string $id)
     {
-        $user = Auth::user();
+        $user = Auth::guard('api')->user();
 
         if ($user->type !== 'admin') {
             return $this->errorResponse('Seul un administrateur peut supprimer un client.', 403);

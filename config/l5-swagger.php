@@ -292,4 +292,22 @@ return [
             'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://my-default-host.com'),
         ],
     ],
+
+    /*
+     * Custom global servers configuration
+     */
+    'servers' => [
+        [
+            'url' => 'http://127.0.0.1:8001',
+            'description' => 'Serveur de développement local',
+        ],
+        [
+            'url' => env('APP_URL', 'http://localhost'),
+            'description' => 'Serveur de développement',
+        ],
+        [
+            'url' => 'https://khadidiatou-fall-api-laravel-0luq.onrender.com',
+            'description' => 'Serveur de production',
+        ],
+    ],
 ];
