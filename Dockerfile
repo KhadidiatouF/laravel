@@ -65,16 +65,10 @@ RUN echo "APP_NAME=Laravel" > .env && \
 RUN chown laravel:laravel .env
 
 # Générer la clé d'application et optimiser
-# USER laravel
-# RUN php artisan key:generate --force \
-#     && php artisan config:cache \
-#     && php artisan route:cache \
-#     && php artisan view:cache
-# USER root
 USER laravel
-# RUN php artisan key:generate --force \
-  RUN php artisan config:cache \
-    # && php artisan route:cache \
+RUN php artisan key:generate --force \
+    && php artisan config:cache \
+    && php artisan route:cache \
     && php artisan view:cache
 USER root
 
