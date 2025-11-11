@@ -13,17 +13,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 FROM php:8.3-fpm-alpine
 
 # Installer les extensions PHP nécessaires
-# RUN apk add --no-cache postgresql-dev \
-#     && docker-php-ext-install pdo pdo_pgsql
-RUN apk add --no-cache \
-        postgresql-dev \
-        autoconf \
-        gcc \
-        g++ \
-        make \
-        openssl-dev \
-    && pecl install mongodb \
-    && docker-php-ext-enable mongodb \
+RUN apk add --no-cache postgresql-dev \
     && docker-php-ext-install pdo pdo_pgsql
 
 # Créer un utilisateur non-root
