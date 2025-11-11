@@ -14,7 +14,6 @@ class Compte extends Model
     protected $fillable = [
         'numCompte',
         'titulaire',
-        'type',
         'date_creation',
         'statut',
         'date_debut_bloquage',
@@ -94,7 +93,6 @@ class Compte extends Model
         // En production, cela ferait un appel HTTP vers un service externe
         return static::onlyTrashed()
             ->with('client')
-            ->where('type', 'epargne')
             ->paginate($perPage);
     }
 }

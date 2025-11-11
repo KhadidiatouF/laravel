@@ -10,8 +10,7 @@ class CompteFactory extends Factory
     public function definition(): array
     {
         return [
-            'titulaire' => Client::factory(), // crée un client associé
-            'type' => fake()->randomElement(['courant', 'epargne', 'cheque']),
+            'titulaire' => Client::factory(), 
             'date_creation' => now(),
             'statut' => fake()->randomElement(['actif', 'inactif']),
         ];

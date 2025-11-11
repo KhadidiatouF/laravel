@@ -44,8 +44,27 @@ return [
                  * Absolute paths to directory containing the swagger annotations are stored.
                  */
                 'annotations' => [
-                    base_path('app'),
+                    base_path('app/Http/Controllers'),
+                    base_path('app/Models'),
+                    base_path('app/Http/Resources'),
                 ],
+                'scanOptions' => [
+                    'exclude' => [
+                        base_path('app/Interfaces'),
+                        base_path('app/Http/Repository'),
+                        base_path('app/Http/Services'),
+                        base_path('app/Observers'),
+                        base_path('app/Listeners'),
+                        base_path('app/Jobs'),
+                        base_path('app/Mail'),
+                        base_path('app/Rules'),
+                        base_path('app/Traits'),
+                        base_path('app/Events'),
+                        base_path('app/Exceptions'),
+                        base_path('app/Console'),
+                    ],
+                ],
+
             ],
         ],
     ],
@@ -99,6 +118,7 @@ return [
              * `scanOptions.exclude` overwrites this
              */
             'excludes' => [],
+
         ],
 
         'scanOptions' => [

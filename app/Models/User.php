@@ -11,12 +11,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
+use Illuminate\Support\Str;
+
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasUuids;
 
  
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
         'nom',
         'prenom',
@@ -40,21 +45,28 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    protected $keyType = 'string';
+   
+   
+    protected static function boot()
+    {
+        parent::boot();
 
-    public $incrementing = false;
-
-     public function isAdmin(): bool {
-        return $this->type === 'admin';
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
     }
 
-    public function isClient(): bool {
-        return $this->type === 'client';
+    public function client(){
+        return $this->hasOne(Client::class);
     }
 
-    public function comptes() {
-        return $this->hasMany(Compte::class, 'titulaire'); // ← Corrigé de 'client_id' à 'titulaire'
+
+    public function admin(){
+        return $this->hasOne(Admin::class);
     }
+
 
     
 }

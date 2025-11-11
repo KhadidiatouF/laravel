@@ -6,6 +6,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Jobs\ArchiveExpiredBlockedAccounts;
 use App\Jobs\UnblockExpiredAccounts;
+use App\Jobs\ArchiveWeeklyTransactions;
 
 class Kernel extends ConsoleKernel
 {
@@ -19,6 +20,9 @@ class Kernel extends ConsoleKernel
 
         // Vérifier et débloquer les comptes depuis Neon tous les jours
         $schedule->job(new UnblockExpiredAccounts)->daily();
+
+        // Archiver les transactions hebdomadaires tous les dimanches à 23h
+        $schedule->job(new ArchiveWeeklyTransactions)->weeklyOn(0, '23:00');
     }
 
     /**

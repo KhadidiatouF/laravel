@@ -10,9 +10,12 @@ return new class extends Migration {
         Schema::create('transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('compte_id');
-            $table->enum('type', ['depot', 'retrait']);
+            $table->enum('type', ['depot', 'retrait', 'transfert', 'virement']);
             $table->decimal('montant', 15, 2);
             $table->string('description')->nullable();
+            $table->uuid('compte_destination_id')->nullable(); // Pour les transferts
+            $table->string('numero_transaction')->unique(); // Numéro unique de transaction
+            $table->enum('statut', ['en_cours', 'validee', 'rejete', 'annule', 'archive'])->default('en_cours');
             $table->timestamp('date_transaction')->useCurrent();
             $table->timestamps();
 
@@ -21,7 +24,14 @@ return new class extends Migration {
                 ->on('comptes')
                 ->onDelete('cascade');
 
+            $table->foreign('compte_destination_id')
+                ->references('id')
+                ->on('comptes')
+                ->onDelete('set null');
+
             $table->index(['compte_id', 'type']);
+            $table->index(['numero_transaction']);
+            $table->index(['date_transaction']);
         });
     }
 

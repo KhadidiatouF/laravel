@@ -16,7 +16,6 @@ class StoreCompteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', 'in:cheque,courant,epargne'],
             'soldeInitial' => ['required', 'numeric', 'min:10000'],
             'devise' => ['required', 'in:FCFA,XOF,EUR,USD'],
             'solde' => ['nullable', 'numeric'],
@@ -35,8 +34,6 @@ class StoreCompteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'type.required' => 'Le type de compte est obligatoire.',
-            'type.in' => 'Le type doit être "cheque", "courant" ou "epargne".',
             'soldeInitial.required' => 'Le solde initial est obligatoire.',
             'soldeInitial.numeric' => 'Le solde initial doit être un nombre.',
             'soldeInitial.min' => 'Le solde initial doit être d\'au moins 10 000 FCFA.',

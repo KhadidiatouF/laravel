@@ -11,14 +11,11 @@ return new class extends Migration {
             $table->uuid('id')->primary();
             $table->string('numCompte')->unique()->index();
             $table->uuid('titulaire');
-            $table->enum('type', ['courant', 'epargne', 'cheque']);
             $table->date('date_creation')->useCurrent();
             $table->enum('statut', ['actif', 'inactif', 'bloqué', 'fermé'])->default('actif');
             $table->timestamps();
 
-            $table->foreign('titulaire')->references('id')
-                ->on('users')
-                ->onDelete('cascade');
+            $table->foreign('titulaire')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

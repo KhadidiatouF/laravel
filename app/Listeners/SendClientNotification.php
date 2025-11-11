@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\CompteCreated;
-use App\Mail\AuthenticationEmail;
+use App\Mail\AuthentificationEmail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
@@ -48,7 +48,7 @@ class SendClientNotification implements ShouldQueue
     private function sendAuthenticationEmail($client, $password, $code)
     {
         try {
-            Mail::to($client->email)->send(new AuthenticationEmail($client, $password, $code));
+            Mail::to($client->email)->send(new AuthentificationEmail($client, $password, $code));
 
             Log::info('Email d\'authentification envoyé avec succès', [
                 'to' => $client->email,

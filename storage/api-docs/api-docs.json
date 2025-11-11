@@ -16,476 +16,6 @@
         }
     ],
     "paths": {
-        "/api/v1/clients": {
-            "get": {
-                "tags": [
-                    "Clients"
-                ],
-                "summary": "Lister les clients",
-                "description": "Lister tous les clients (Admin seulement)",
-                "operationId": "b302d909c0e1166a2c033bfd17ed030f",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "description": "Numéro de page",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 1
-                        }
-                    },
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "description": "Nombre d'éléments par page",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 10,
-                            "maximum": 100
-                        }
-                    },
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "description": "Recherche par nom, prénom, email ou téléphone",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "telephone",
-                        "in": "query",
-                        "description": "Filtrer par numéro de téléphone",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Liste des clients",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Client"
-                                            }
-                                        },
-                                        "pagination": {
-                                            "$ref": "#/components/schemas/Pagination"
-                                        },
-                                        "links": {
-                                            "$ref": "#/components/schemas/Links"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé - Admin requis"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Clients"
-                ],
-                "summary": "Créer un nouveau client",
-                "description": "Créer un nouveau client",
-                "operationId": "72a51329a9c85d73e15e640b5b53e470",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "nom",
-                                    "prenom",
-                                    "email",
-                                    "telephone",
-                                    "adresse"
-                                ],
-                                "properties": {
-                                    "nom": {
-                                        "type": "string",
-                                        "example": "Diallo"
-                                    },
-                                    "prenom": {
-                                        "type": "string",
-                                        "example": "Mamadou"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "mamadou.diallo@example.com"
-                                    },
-                                    "telephone": {
-                                        "type": "string",
-                                        "example": "+221771234567"
-                                    },
-                                    "adresse": {
-                                        "type": "string",
-                                        "example": "Dakar, Sénégal"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Client créé avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Client créé avec succès"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Client"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Données invalides",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "VALIDATION_ERROR"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Les données fournies sont invalides"
-                                                },
-                                                "details": {
-                                                    "type": "object"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/clients/{id}": {
-            "get": {
-                "tags": [
-                    "Clients"
-                ],
-                "summary": "Afficher un client spécifique",
-                "description": "Afficher un client spécifique",
-                "operationId": "0a628c8462ccec3d2798255b1015c22c",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID du client",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Détails du client",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Client"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Client non trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "put": {
-                "tags": [
-                    "Clients"
-                ],
-                "summary": "Mettre à jour un client",
-                "description": "Mettre à jour un client",
-                "operationId": "d3fe03185b96f228b623f3b36d7c086f",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID du client",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "nom": {
-                                        "type": "string",
-                                        "example": "Diallo"
-                                    },
-                                    "prenom": {
-                                        "type": "string",
-                                        "example": "Mamadou"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "mamadou.diallo@example.com"
-                                    },
-                                    "telephone": {
-                                        "type": "string",
-                                        "example": "+221771234567"
-                                    },
-                                    "adresse": {
-                                        "type": "string",
-                                        "example": "Dakar, Sénégal"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Client mis à jour avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Client mis à jour avec succès"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Client"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Client non trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Clients"
-                ],
-                "summary": "Supprimer un client",
-                "description": "Supprimer un client",
-                "operationId": "edeb32faf4e5856e533c5dc13c18e780",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID du client",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Client supprimé avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Client supprimé avec succès"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Client non trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/clients/telephone/{telephone}": {
-            "get": {
-                "tags": [
-                    "Clients"
-                ],
-                "summary": "Récupérer un client à partir du numéro téléphone",
-                "description": "Récupérer un client à partir du numéro téléphone",
-                "operationId": "2a27add946f98ccb62c3e41aefc5d64a",
-                "parameters": [
-                    {
-                        "name": "telephone",
-                        "in": "path",
-                        "description": "Numéro de téléphone du client",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "+221771234567"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Client trouvé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Client"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Client non trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé - Admin requis"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/v1/comptes": {
             "get": {
                 "tags": [
@@ -636,21 +166,11 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "type",
                                     "soldeInitial",
                                     "devise",
                                     "client"
                                 ],
                                 "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "cheque",
-                                            "courant",
-                                            "epargne"
-                                        ],
-                                        "example": "courant"
-                                    },
                                     "soldeInitial": {
                                         "type": "number",
                                         "minimum": 10000,
@@ -669,20 +189,6 @@
                                     "solde": {
                                         "type": "number",
                                         "example": 10000
-                                    },
-                                    "dateDebutBlocage": {
-                                        "description": "Date de début du blocage (pour comptes épargne)",
-                                        "type": "string",
-                                        "format": "date",
-                                        "example": "2025-10-30",
-                                        "nullable": true
-                                    },
-                                    "dateFinBlocage": {
-                                        "description": "Date de fin du blocage (doit être postérieure à dateDebutBlocage)",
-                                        "type": "string",
-                                        "format": "date",
-                                        "example": "2025-11-02",
-                                        "nullable": true
                                     },
                                     "client": {
                                         "properties": {
@@ -793,350 +299,13 @@
                 ]
             }
         },
-        "/api/v1/comptes/archives": {
-            "get": {
-                "tags": [
-                    "Comptes"
-                ],
-                "summary": "Lister les comptes archivés",
-                "description": "Lister les comptes archivés (Admin seulement)",
-                "operationId": "5f0a5446f8e470174bb85a62f37d2fab",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "description": "Numéro de page",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 1
-                        }
-                    },
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "description": "Nombre d'éléments par page",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 10,
-                            "maximum": 100
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Liste des comptes archivés",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Compte"
-                                            }
-                                        },
-                                        "pagination": {
-                                            "$ref": "#/components/schemas/Pagination"
-                                        },
-                                        "links": {
-                                            "$ref": "#/components/schemas/Links"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé - Admin requis"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/comptes/{numero}": {
-            "get": {
-                "tags": [
-                    "Comptes"
-                ],
-                "summary": "Détail de compte à partir du numéro",
-                "description": "Afficher un compte spécifique par numéro",
-                "operationId": "0210219b689fdc768ead8c77093b3cc2",
-                "parameters": [
-                    {
-                        "name": "numero",
-                        "in": "path",
-                        "description": "Numéro du compte (ex: C-20251030-ABCD)",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "C-20251030-ABCD"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Détails du compte",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Compte"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Compte non trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/comptes/{id}": {
-            "put": {
-                "tags": [
-                    "Comptes"
-                ],
-                "summary": "Mettre à jour un compte",
-                "description": "Mettre à jour un compte",
-                "operationId": "f1223a554a65c1d20b66f74d721400d6",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID du compte",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "courant",
-                                            "epargne",
-                                            "bloqué",
-                                            "cheque"
-                                        ]
-                                    },
-                                    "statut": {
-                                        "type": "string",
-                                        "enum": [
-                                            "actif",
-                                            "inactif",
-                                            "fermé"
-                                        ]
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Compte mis à jour avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte mis à jour avec succès"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Compte"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Compte non trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Comptes"
-                ],
-                "summary": "Supprimer un compte ",
-                "description": "Supprimer un compte",
-                "operationId": "d48fa8ae024d7cd08de4d9be241220b0",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID du compte",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Compte supprimé avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte supprimé avec succès"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Compte non trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/comptes/telephone/{telephone}": {
-            "get": {
-                "tags": [
-                    "Comptes"
-                ],
-                "summary": "Récupérer les comptes d'un client par numéro de téléphone",
-                "description": "Récupérer les comptes d'un client par numéro de téléphone",
-                "operationId": "62d6305ded7d44cbc38c6d3b0d6ad3ed",
-                "parameters": [
-                    {
-                        "name": "telephone",
-                        "in": "path",
-                        "description": "Numéro de téléphone du client",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "+221771234567"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Comptes trouvés",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Compte"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Aucun compte trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/login": {
             "post": {
                 "tags": [
                     "Authentification"
                 ],
                 "summary": "Authentification utilisateur",
-                "description": "Permet à un utilisateur (admin ou client) de se connecter et d'obtenir un token d'accès et un refresh token",
+                "description": "Permet à un utilisateur (admin ou client) de se connecter avec son numéro de téléphone et d'obtenir un token d'accès",
                 "operationId": "login",
                 "requestBody": {
                     "required": true,
@@ -1147,19 +316,12 @@
                                     {
                                         "title": "Connexion Admin",
                                         "required": [
-                                            "email",
-                                            "password"
+                                            "telephone"
                                         ],
                                         "properties": {
-                                            "email": {
+                                            "telephone": {
                                                 "type": "string",
-                                                "format": "email",
-                                                "example": "admin@example.com"
-                                            },
-                                            "password": {
-                                                "type": "string",
-                                                "format": "password",
-                                                "example": "password"
+                                                "example": "+221771234567"
                                             }
                                         },
                                         "type": "object"
@@ -1167,20 +329,13 @@
                                     {
                                         "title": "Connexion Client",
                                         "required": [
-                                            "email",
-                                            "password",
+                                            "telephone",
                                             "codeSms"
                                         ],
                                         "properties": {
-                                            "email": {
+                                            "telephone": {
                                                 "type": "string",
-                                                "format": "email",
-                                                "example": "client@example.com"
-                                            },
-                                            "password": {
-                                                "type": "string",
-                                                "format": "password",
-                                                "example": "password"
+                                                "example": "+221771234567"
                                             },
                                             "codeSms": {
                                                 "description": "Code de vérification SMS requis pour la première connexion",
@@ -1212,36 +367,6 @@
                                         },
                                         "data": {
                                             "properties": {
-                                                "user": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string",
-                                                            "format": "uuid",
-                                                            "example": "550e8400-e29b-41d4-a716-446655440000"
-                                                        },
-                                                        "nom": {
-                                                            "type": "string",
-                                                            "example": "Admin"
-                                                        },
-                                                        "prenom": {
-                                                            "type": "string",
-                                                            "example": "System"
-                                                        },
-                                                        "email": {
-                                                            "type": "string",
-                                                            "example": "admin@example.com"
-                                                        },
-                                                        "type": {
-                                                            "type": "string",
-                                                            "enum": [
-                                                                "admin",
-                                                                "client"
-                                                            ],
-                                                            "example": "admin"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
                                                 "access_token": {
                                                     "type": "string",
                                                     "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
@@ -1284,7 +409,7 @@
                         }
                     },
                     "401": {
-                        "description": "Identifiants incorrects ou code SMS invalide",
+                        "description": "Numéro de téléphone introuvable ou code SMS invalide",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1295,7 +420,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Identifiants incorrects ou code SMS invalide"
+                                            "example": "Numéro de téléphone introuvable ou code SMS invalide"
                                         }
                                     },
                                     "type": "object"
@@ -1329,13 +454,14 @@
                 }
             }
         },
-        "/api/v1/users": {
+        "/api/v1/transactions": {
             "get": {
                 "tags": [
-                    "Users"
+                    "Transactions"
                 ],
-                "summary": "Lister tous les utilisateurs",
-                "operationId": "3ab81e3f9b24b4f36ab08d72349ac632",
+                "summary": "Lister les transactions",
+                "description": "Lister toutes les transactions (Admin) ou les transactions du client connecté",
+                "operationId": "9115b43a55e6c92c81e6c62926e4034f",
                 "parameters": [
                     {
                         "name": "page",
@@ -1361,29 +487,67 @@
                     {
                         "name": "type",
                         "in": "query",
-                        "description": "Filtrer par type d'utilisateur",
+                        "description": "Filtrer par type",
                         "required": false,
                         "schema": {
                             "type": "string",
                             "enum": [
-                                "admin",
-                                "client"
+                                "depot",
+                                "retrait",
+                                "transfert",
+                                "payement"
                             ]
                         }
                     },
                     {
-                        "name": "search",
+                        "name": "statut",
                         "in": "query",
-                        "description": "Recherche par nom, prénom ou email",
+                        "description": "Filtrer par statut",
                         "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                                "en_cours",
+                                "validee",
+                                "rejete",
+                                "annule"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "compte_id",
+                        "in": "query",
+                        "description": "Filtrer par compte",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "description": "Date de début (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "description": "Date de fin (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des utilisateurs",
+                        "description": "Liste des transactions",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1395,14 +559,111 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/User"
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                    },
+                                                    "numeroTransaction": {
+                                                        "type": "string",
+                                                        "example": "TXN-20251102-ABCD"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "depot",
+                                                            "retrait",
+                                                            "transfert",
+                                                            "payement"
+                                                        ],
+                                                        "example": "depot"
+                                                    },
+                                                    "montant": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 50000
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Dépôt d'espèces",
+                                                        "nullable": true
+                                                    },
+                                                    "statut": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "en_cours",
+                                                            "validee",
+                                                            "rejete",
+                                                            "annule"
+                                                        ],
+                                                        "example": "validee"
+                                                    },
+                                                    "dateTransaction": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-11-02T10:30:00Z"
+                                                    },
+                                                    "compteSource": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "format": "uuid",
+                                                                "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                                                            },
+                                                            "numeroCompte": {
+                                                                "type": "string",
+                                                                "example": "C-20251102-ABCD"
+                                                            },
+                                                            "telephone": {
+                                                                "type": "string",
+                                                                "example": "+221771234567"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "compteDestination": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "format": "uuid",
+                                                                "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                                                            },
+                                                            "numeroCompte": {
+                                                                "type": "string",
+                                                                "example": "C-20251102-EFGH"
+                                                            },
+                                                            "telephone": {
+                                                                "type": "string",
+                                                                "example": "+221788839933"
+                                                            }
+                                                        },
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "metadata": {
+                                                        "properties": {
+                                                            "derniereModification": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-11-02T10:30:00Z"
+                                                            },
+                                                            "version": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
                                             }
                                         },
                                         "pagination": {
-                                            "$ref": "#/components/schemas/Pagination"
+                                            "$ref": "#/components/schemas/TransactionPagination"
                                         },
                                         "links": {
-                                            "$ref": "#/components/schemas/Links"
+                                            "$ref": "#/components/schemas/TransactionLinks"
                                         }
                                     },
                                     "type": "object"
@@ -1414,7 +675,7 @@
                         "description": "Non autorisé"
                     },
                     "403": {
-                        "description": "Accès refusé - Admin requis"
+                        "description": "Accès refusé"
                     }
                 },
                 "security": [
@@ -1425,59 +686,168 @@
             },
             "post": {
                 "tags": [
-                    "Users"
+                    "Transactions"
                 ],
-                "summary": "Créer un nouvel utilisateur",
-                "operationId": "ba548b97148bb5c0d8cab3bc3f128bfd",
+                "summary": "Créer une nouvelle transaction",
+                "description": "Créer une nouvelle transaction",
+                "operationId": "5968345d7524698be1b46f545cf2a41d",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "nom",
-                                    "prenom",
-                                    "email",
-                                    "password",
-                                    "type"
-                                ],
-                                "properties": {
-                                    "nom": {
-                                        "type": "string"
+                                "oneOf": [
+                                    {
+                                        "title": "Dépôt",
+                                        "required": [
+                                            "telephone",
+                                            "type",
+                                            "montant"
+                                        ],
+                                        "properties": {
+                                            "telephone": {
+                                                "type": "string",
+                                                "example": "+221771234567"
+                                            },
+                                            "type": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "depot"
+                                                ],
+                                                "example": "depot"
+                                            },
+                                            "montant": {
+                                                "type": "number",
+                                                "minimum": 100,
+                                                "example": 50000
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "example": "Dépôt d'espèces",
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object"
                                     },
-                                    "prenom": {
-                                        "type": "string"
+                                    {
+                                        "title": "Retrait",
+                                        "required": [
+                                            "telephone",
+                                            "type",
+                                            "montant"
+                                        ],
+                                        "properties": {
+                                            "telephone": {
+                                                "type": "string",
+                                                "example": "+221771234567"
+                                            },
+                                            "type": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "retrait"
+                                                ],
+                                                "example": "retrait"
+                                            },
+                                            "montant": {
+                                                "type": "number",
+                                                "minimum": 100,
+                                                "example": 50000
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "example": "Retrait d'espèces",
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object"
                                     },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email"
+                                    {
+                                        "title": "Transfert",
+                                        "required": [
+                                            "telephone",
+                                            "type",
+                                            "montant",
+                                            "numero_destinataire"
+                                        ],
+                                        "properties": {
+                                            "telephone": {
+                                                "type": "string",
+                                                "example": "+221771234567"
+                                            },
+                                            "type": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "transfert"
+                                                ],
+                                                "example": "transfert"
+                                            },
+                                            "montant": {
+                                                "type": "number",
+                                                "minimum": 100,
+                                                "example": 50000
+                                            },
+                                            "numero_destinataire": {
+                                                "type": "string",
+                                                "example": "+221788839933"
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "example": "Transfert vers un ami",
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object"
                                     },
-                                    "telephone": {
-                                        "type": "string"
-                                    },
-                                    "adresse": {
-                                        "type": "string"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password"
-                                    },
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "admin",
-                                            "client"
-                                        ]
+                                    {
+                                        "title": "Paiement",
+                                        "required": [
+                                            "telephone",
+                                            "type",
+                                            "montant",
+                                            "numero_destinataire"
+                                        ],
+                                        "properties": {
+                                            "telephone": {
+                                                "type": "string",
+                                                "example": "+221771234567"
+                                            },
+                                            "type": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "payement"
+                                                ],
+                                                "example": "payement"
+                                            },
+                                            "montant": {
+                                                "type": "number",
+                                                "minimum": 100,
+                                                "example": 50000
+                                            },
+                                            "numero_destinataire": {
+                                                "type": "string",
+                                                "example": "+221788839933"
+                                            },
+                                            "code_marchand": {
+                                                "type": "string",
+                                                "example": "MARCHAND123",
+                                                "nullable": true
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "example": "Paiement de facture",
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object"
                                     }
-                                },
-                                "type": "object"
+                                ]
                             }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "Utilisateur créé",
+                        "description": "Transaction créée avec succès",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1488,10 +858,107 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Utilisateur créé avec succès"
+                                            "example": "Transaction créée avec succès"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "numeroTransaction": {
+                                                    "type": "string",
+                                                    "example": "TXN-20251102-ABCD"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "depot",
+                                                        "retrait",
+                                                        "transfert",
+                                                        "payement"
+                                                    ],
+                                                    "example": "depot"
+                                                },
+                                                "montant": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 50000
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Dépôt d'espèces",
+                                                    "nullable": true
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "en_cours",
+                                                        "validee",
+                                                        "rejete",
+                                                        "annule"
+                                                    ],
+                                                    "example": "validee"
+                                                },
+                                                "dateTransaction": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-11-02T10:30:00Z"
+                                                },
+                                                "compteSource": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                                                        },
+                                                        "numeroCompte": {
+                                                            "type": "string",
+                                                            "example": "C-20251102-ABCD"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "+221771234567"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "compteDestination": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                                                        },
+                                                        "numeroCompte": {
+                                                            "type": "string",
+                                                            "example": "C-20251102-EFGH"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "+221788839933"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "metadata": {
+                                                    "properties": {
+                                                        "derniereModification": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-11-02T10:30:00Z"
+                                                        },
+                                                        "version": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -1500,13 +967,29 @@
                         }
                     },
                     "400": {
-                        "description": "Données invalides"
+                        "description": "Données invalides ou solde insuffisant",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Non autorisé"
                     },
                     "403": {
-                        "description": "Accès refusé - Admin requis"
+                        "description": "Accès refusé"
                     }
                 },
                 "security": [
@@ -1516,18 +999,19 @@
                 ]
             }
         },
-        "/api/users/{id}": {
+        "/api/v1/transactions/{id}": {
             "get": {
                 "tags": [
-                    "Users"
+                    "Transactions"
                 ],
-                "summary": "Afficher un utilisateur spécifique",
-                "operationId": "36a33ff774d5cba33c039dec2c3e0287",
+                "summary": "Afficher une transaction spécifique",
+                "description": "Afficher une transaction spécifique",
+                "operationId": "688bc3b066f6fe867ee32162fa08e71b",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de l'utilisateur",
+                        "description": "ID de la transaction",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -1537,7 +1021,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Détails de l'utilisateur",
+                        "description": "Détails de la transaction",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1547,7 +1031,104 @@
                                             "example": true
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "numeroTransaction": {
+                                                    "type": "string",
+                                                    "example": "TXN-20251102-ABCD"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "depot",
+                                                        "retrait",
+                                                        "transfert",
+                                                        "payement"
+                                                    ],
+                                                    "example": "depot"
+                                                },
+                                                "montant": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 50000
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Dépôt d'espèces",
+                                                    "nullable": true
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "en_cours",
+                                                        "validee",
+                                                        "rejete",
+                                                        "annule"
+                                                    ],
+                                                    "example": "validee"
+                                                },
+                                                "dateTransaction": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-11-02T10:30:00Z"
+                                                },
+                                                "compteSource": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                                                        },
+                                                        "numeroCompte": {
+                                                            "type": "string",
+                                                            "example": "C-20251102-ABCD"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "+221771234567"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "compteDestination": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                                                        },
+                                                        "numeroCompte": {
+                                                            "type": "string",
+                                                            "example": "C-20251102-EFGH"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "+221788839933"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "metadata": {
+                                                    "properties": {
+                                                        "derniereModification": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-11-02T10:30:00Z"
+                                                        },
+                                                        "version": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -1556,162 +1137,7 @@
                         }
                     },
                     "404": {
-                        "description": "Utilisateur non trouvé"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "put": {
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Mettre à jour un utilisateur",
-                "operationId": "b9091397c8b25f12c6adb74be6ce3a5a",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID de l'utilisateur",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "nom": {
-                                        "type": "string"
-                                    },
-                                    "prenom": {
-                                        "type": "string"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email"
-                                    },
-                                    "telephone": {
-                                        "type": "string"
-                                    },
-                                    "adresse": {
-                                        "type": "string"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password"
-                                    },
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "admin",
-                                            "client"
-                                        ]
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Utilisateur mis à jour",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Utilisateur mis à jour avec succès"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/User"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Utilisateur non trouvé"
-                    },
-                    "400": {
-                        "description": "Données invalides"
-                    },
-                    "401": {
-                        "description": "Non autorisé"
-                    },
-                    "403": {
-                        "description": "Accès refusé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Supprimer un utilisateur",
-                "operationId": "fa56cffde745d3f152f95cbacd936c0b",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID de l'utilisateur",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Utilisateur supprimé avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Utilisateur supprimé avec succès"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Utilisateur non trouvé"
+                        "description": "Transaction non trouvée"
                     },
                     "401": {
                         "description": "Non autorisé"
@@ -1730,65 +1156,6 @@
     },
     "components": {
         "schemas": {
-            "Client": {
-                "title": "Client",
-                "description": "Objet représentant un client",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "example": "550e8400-e29b-41d4-a716-446655440000"
-                    },
-                    "nom": {
-                        "type": "string",
-                        "example": "Diallo"
-                    },
-                    "prenom": {
-                        "type": "string",
-                        "example": "Mamadou"
-                    },
-                    "email": {
-                        "type": "string",
-                        "format": "email",
-                        "example": "mamadou.diallo@example.com"
-                    },
-                    "telephone": {
-                        "type": "string",
-                        "example": "+221771234567"
-                    },
-                    "adresse": {
-                        "type": "string",
-                        "example": "Dakar, Sénégal"
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": [
-                            "client"
-                        ],
-                        "example": "client"
-                    },
-                    "dateCreation": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2025-10-25T17:33:20Z"
-                    },
-                    "metadata": {
-                        "properties": {
-                            "derniereModification": {
-                                "type": "string",
-                                "format": "date-time",
-                                "example": "2025-10-25T17:33:20Z"
-                            },
-                            "version": {
-                                "type": "integer",
-                                "example": 1
-                            }
-                        },
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
             "Pagination": {
                 "title": "Pagination",
                 "description": "Informations de pagination",
@@ -1943,56 +1310,147 @@
                 },
                 "type": "object"
             },
-            "User": {
-                "title": "User",
-                "description": "Modèle utilisateur",
+            "TransactionPagination": {
+                "title": "Pagination des Transactions",
+                "description": "Informations de pagination pour les transactions",
                 "properties": {
-                    "id": {
-                        "description": "ID unique de l'utilisateur",
+                    "current_page": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 50
+                    },
+                    "last_page": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "from": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "to": {
+                        "type": "integer",
+                        "example": 10
+                    }
+                },
+                "type": "object"
+            },
+            "TransactionLinks": {
+                "title": "Liens de navigation des Transactions",
+                "description": "Liens de navigation pour les transactions",
+                "properties": {
+                    "first": {
                         "type": "string",
-                        "format": "uuid"
+                        "example": "http://api.banque.example.com/api/v1/transactions?page=1"
                     },
-                    "nom": {
-                        "description": "Nom de l'utilisateur",
-                        "type": "string"
-                    },
-                    "prenom": {
-                        "description": "Prénom de l'utilisateur",
-                        "type": "string"
-                    },
-                    "email": {
-                        "description": "Adresse email",
+                    "last": {
                         "type": "string",
-                        "format": "email"
+                        "example": "http://api.banque.example.com/api/v1/transactions?page=5"
                     },
-                    "telephone": {
-                        "description": "Numéro de téléphone",
-                        "type": "string"
-                    },
-                    "adresse": {
-                        "description": "Adresse",
-                        "type": "string"
-                    },
-                    "type": {
-                        "description": "Type d'utilisateur",
+                    "prev": {
                         "type": "string",
-                        "enum": [
-                            "admin",
-                            "client"
-                        ]
-                    },
-                    "email_verified_at": {
-                        "type": "string",
-                        "format": "date-time",
+                        "example": null,
                         "nullable": true
                     },
-                    "created_at": {
+                    "next": {
                         "type": "string",
-                        "format": "date-time"
+                        "example": "http://api.banque.example.com/api/v1/transactions?page=2"
+                    }
+                },
+                "type": "object"
+            },
+            "Transaction": {
+                "title": "Transaction",
+                "description": "Objet représentant une transaction bancaire",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
                     },
-                    "updated_at": {
+                    "numeroTransaction": {
                         "type": "string",
-                        "format": "date-time"
+                        "example": "TXN-20251102-ABCD"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "depot",
+                            "retrait",
+                            "transfert",
+                            "virement"
+                        ],
+                        "example": "depot"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50000
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Dépôt d'espèces",
+                        "nullable": true
+                    },
+                    "statut": {
+                        "type": "string",
+                        "enum": [
+                            "en_cours",
+                            "validee",
+                            "rejete",
+                            "annule"
+                        ],
+                        "example": "validee"
+                    },
+                    "dateTransaction": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-02T10:30:00Z"
+                    },
+                    "compteSource": {
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "numeroCompte": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "compteDestination": {
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "numeroCompte": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "properties": {
+                            "derniereModification": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2025-11-02T10:30:00Z"
+                            },
+                            "version": {
+                                "type": "integer",
+                                "example": 1
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -2009,10 +1467,6 @@
     },
     "tags": [
         {
-            "name": "Clients",
-            "description": "Clients"
-        },
-        {
             "name": "Comptes",
             "description": "Comptes"
         },
@@ -2021,8 +1475,8 @@
             "description": "Authentification"
         },
         {
-            "name": "Users",
-            "description": "Users"
+            "name": "Transactions",
+            "description": "Transactions"
         }
     ],
     "security": [

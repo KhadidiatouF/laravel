@@ -17,7 +17,6 @@ class CompteSeeder extends Seeder
             return;
         }
 
-        $types = ['courant', 'epargne', 'cheque'];
         $statuts = ['actif', 'inactif', 'bloqué', 'fermé'];
 
         foreach ($clients as $client) {
@@ -27,7 +26,6 @@ class CompteSeeder extends Seeder
             for ($i = 0; $i < $nombreComptes; $i++) {
                 Compte::create([
                     'titulaire' => $client->id, // Maintenant c'est un UUID valide
-                    'type' => $types[array_rand($types)],
                     'date_creation' => now()->subDays(rand(0, 365)),
                     'statut' => $statuts[array_rand($statuts)],
                 ]);

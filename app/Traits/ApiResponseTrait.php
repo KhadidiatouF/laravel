@@ -31,6 +31,11 @@ trait ApiResponseTrait
      */
     protected function errorResponse(string $message = 'Une erreur est survenue', int $statusCode = 400, $errors = null)
     {
+        // S'assurer que le code de statut est valide (100-599)
+        if ($statusCode < 100 || $statusCode > 599) {
+            $statusCode = 400;
+        }
+
         $response = [
             'success' => false,
             'message' => $message,

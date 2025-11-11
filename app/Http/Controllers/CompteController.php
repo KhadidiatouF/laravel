@@ -153,13 +153,11 @@ class CompteController extends Controller
             return $this->errorResponse('Utilisateur non authentifié.', 401);
         }
 
-        // Validation des paramètres
         $validated = $request->validate([
             'page' => 'integer|min:1',
             'limit' => 'integer|min:1|max:100',
-            'type' => ['nullable', Rule::in(['courant', 'epargne', 'cheque'])],
             'statut' => ['nullable', Rule::in(['actif', 'inactif', 'bloqué'])],
-            'search' => 'nullable|string|max:255',
+            'search' => 'nullable|string',
             'sort' => ['nullable', Rule::in(['dateCreation', 'solde', 'titulaire'])],
             'order' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
@@ -174,11 +172,7 @@ class CompteController extends Controller
             $query->where('statut', 'actif');
         }
 
-        // Appliquer les filtres
-        if (!empty($validated['type'])) {
-            $query->where('type', $validated['type']);
-        }
-
+    
         if (!empty($validated['statut'])) {
             $query->where('statut', $validated['statut']);
         }
@@ -197,7 +191,7 @@ class CompteController extends Controller
         // Appliquer le tri
         $sortField = match ($validated['sort'] ?? 'dateCreation') {
             'dateCreation' => 'date_creation',
-            'solde' => 'created_at', // Tri par date de création comme approximation du solde
+            'solde' => 'created_at', 
             'titulaire' => 'titulaire',
             default => 'date_creation',
         };
@@ -212,43 +206,6 @@ class CompteController extends Controller
         return $this->paginatedResponse($comptes, CompteResource::class);
     }
 
-    /**
-     * Lister les comptes archivés (Admin seulement)
-     *
-     * @OA\Get(
-     *     path="/api/v1/comptes/archives",
-     *     summary="Lister les comptes archivés",
-     *     tags={"Comptes"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="page",
-     *         in="query",
-     *         description="Numéro de page",
-     *         required=false,
-     *         @OA\Schema(type="integer", default=1)
-     *     ),
-     *     @OA\Parameter(
-     *         name="limit",
-     *         in="query",
-     *         description="Nombre d'éléments par page",
-     *         required=false,
-     *         @OA\Schema(type="integer", default=10, maximum=100)
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Liste des comptes archivés",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Compte")),
-     *             @OA\Property(property="pagination", ref="#/components/schemas/Pagination"),
-     *             @OA\Property(property="links", ref="#/components/schemas/Links")
-     *         )
-     *     ),
-     *     @OA\Response(response=401, description="Non autorisé"),
-     *     @OA\Response(response=403, description="Accès refusé - Admin requis")
-     * )
-     */
     public function archives(Request $request)
     {
         $user = Auth::guard('api')->user();
@@ -283,13 +240,10 @@ class CompteController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"type", "soldeInitial", "devise", "client"},
-     *             @OA\Property(property="type", type="string", enum={"cheque", "courant", "epargne"}, example="courant"),
+     *             required={"soldeInitial", "devise", "client"},
      *             @OA\Property(property="soldeInitial", type="number", minimum=10000, example=500000),
      *             @OA\Property(property="devise", type="string", enum={"FCFA", "XOF", "EUR", "USD"}, example="FCFA"),
      *             @OA\Property(property="solde", type="number", example=10000),
-     *             @OA\Property(property="dateDebutBlocage", type="string", format="date", nullable=true, example="2025-10-30", description="Date de début du blocage (pour comptes épargne)"),
-     *             @OA\Property(property="dateFinBlocage", type="string", format="date", nullable=true, example="2025-11-02", description="Date de fin du blocage (doit être postérieure à dateDebutBlocage)"),
      *             @OA\Property(property="client", type="object",
      *                 @OA\Property(property="id", type="string", format="uuid", nullable=true, example=null),
      *                 @OA\Property(property="titulaire", type="string", example="Hawa BB Wane"),
@@ -366,7 +320,12 @@ class CompteController extends Controller
         $dateFinBlocage = null;
         $statutInitial = 'actif';
 
-        if ($validated['type'] === 'epargne') {
+        // Par défaut, créer un compte courant
+        $typeCompte = 'courant';
+
+        // Si des dates de blocage sont fournies, créer un compte épargne
+        if (!empty($validated['dateDebutBlocage']) && !empty($validated['dateFinBlocage'])) {
+            $typeCompte = 'epargne';
             $dateDebutBlocage = $validated['dateDebutBlocage'];
             $dateFinBlocage = $validated['dateFinBlocage'];
 
@@ -384,12 +343,12 @@ class CompteController extends Controller
         // Créer le compte
         $compte = Compte::create([
             'titulaire' => $client->id,
-            'type' => $validated['type'],
+            'type' => $typeCompte,
             'statut' => $statutInitial,
             'date_creation' => now(),
-            'date_debut_bloquage' => $dateDebutBlocage,
-            'date_fin_bloquage' => $dateFinBlocage,
-            'duree_bloquage_jours' => $dureeBlocage,
+            'date_debut_bloquage' => $dateDebutBlocage ?? null,
+            'date_fin_bloquage' => $dateFinBlocage ?? null,
+            'duree_bloquage_jours' => $dureeBlocage ?? null,
         ]);
 
         // Créer une transaction initiale pour le solde
@@ -416,10 +375,10 @@ class CompteController extends Controller
                 Mail::to($client->email)->send(new CompteCreatedMail($compte, $client, $password));
             }
 
-            \Illuminate\Support\Facades\Log::info('✅ Email envoyé avec succès à: ' . $client->email);
+            \Illuminate\Support\Facades\Log::info('Email envoyé avec succès à: ' . $client->email);
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('❌ Erreur lors de l\'envoi de l\'email: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Erreur lors de l\'envoi de l\'email: ' . $e->getMessage());
             \Illuminate\Support\Facades\Log::error('Classe d\'erreur: ' . get_class($e));
             \Illuminate\Support\Facades\Log::error('Code d\'erreur: ' . $e->getCode());
 
@@ -444,10 +403,10 @@ class CompteController extends Controller
                             ->subject('Votre compte bancaire a été créé - Banque API');
                 });
 
-                \Illuminate\Support\Facades\Log::info('✅ Email de fallback envoyé avec succès');
+                \Illuminate\Support\Facades\Log::info('Email de fallback envoyé avec succès');
 
             } catch (\Exception $fallbackError) {
-                \Illuminate\Support\Facades\Log::error('❌ Échec même du fallback: ' . $fallbackError->getMessage());
+                \Illuminate\Support\Facades\Log::error('Échec même du fallback: ' . $fallbackError->getMessage());
             }
 
             // Ne pas échouer la création du compte si l'email échoue
@@ -467,35 +426,6 @@ class CompteController extends Controller
         );
     }
 
-    /**
-     * Afficher un compte spécifique par numéro
-     *
-     * @OA\Get(
-     *     path="/api/v1/comptes/{numero}",
-     *     summary="Détail de compte à partir du numéro",
-     *     tags={"Comptes"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="numero",
-     *         in="path",
-     *         required=true,
-     *         description="Numéro du compte (ex: C-20251030-ABCD)",
-     *         @OA\Schema(type="string", example="C-20251030-ABCD")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Détails du compte",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Compte non trouvé"),
-     *     @OA\Response(response=401, description="Non autorisé"),
-     *     @OA\Response(response=403, description="Accès refusé")
-     * )
-     */
     public function show(string $numero)
     {
         $user = Auth::guard('api')->user();
@@ -533,43 +463,6 @@ class CompteController extends Controller
         return $this->successResponse(new CompteResource($compte));
     }
 
-    /**
-     * Mettre à jour un compte
-     *
-     * @OA\Put(
-     *     path="/api/v1/comptes/{id}",
-     *     summary="Mettre à jour un compte",
-     *     tags={"Comptes"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID du compte",
-     *         @OA\Schema(type="string", format="uuid")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="type", type="string", enum={"courant", "epargne", "bloqué", "cheque"}),
-     *             @OA\Property(property="statut", type="string", enum={"actif", "inactif", "fermé"})
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Compte mis à jour avec succès",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte mis à jour avec succès"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Compte non trouvé"),
-     *     @OA\Response(response=401, description="Non autorisé"),
-     *     @OA\Response(response=403, description="Accès refusé")
-     * )
-     */
     public function update(Request $request, string $id)
     {
         $user = Auth::guard('api')->user();
@@ -604,35 +497,6 @@ class CompteController extends Controller
         );
     }
 
-    /**
-     * Récupérer les comptes d'un client par numéro de téléphone
-     *
-     * @OA\Get(
-     *     path="/api/v1/comptes/telephone/{telephone}",
-     *     summary="Récupérer les comptes d'un client par numéro de téléphone",
-     *     tags={"Comptes"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="telephone",
-     *         in="path",
-     *         required=true,
-     *         description="Numéro de téléphone du client",
-     *         @OA\Schema(type="string", example="+221771234567")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Comptes trouvés",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Compte"))
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Aucun compte trouvé"),
-     *     @OA\Response(response=401, description="Non autorisé"),
-     *     @OA\Response(response=403, description="Accès refusé")
-     * )
-     */
     public function findByPhone(string $telephone)
     {
         $user = Auth::guard('api')->user();
@@ -670,35 +534,6 @@ class CompteController extends Controller
         );
     }
 
-    /**
-     * Supprimer un compte
-     *
-     * @OA\Delete(
-     *     path="/api/v1/comptes/{id}",
-     *     summary="Supprimer un compte ",
-     *     tags={"Comptes"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID du compte",
-     *         @OA\Schema(type="string", format="uuid")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Compte supprimé avec succès",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte supprimé avec succès")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Compte non trouvé"),
-     *     @OA\Response(response=401, description="Non autorisé"),
-     *     @OA\Response(response=403, description="Accès refusé")
-     * )
-     */
     public function destroy(string $id)
     {
         $user = Auth::guard('api')->user();

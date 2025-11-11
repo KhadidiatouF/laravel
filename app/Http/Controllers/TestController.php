@@ -31,7 +31,7 @@ class TestController extends Controller
      * @OA\Post(
      *     path="/api/login",
      *     summary="Authentification utilisateur",
-     *     description="Permet à un utilisateur (admin ou client) de se connecter et d'obtenir un token d'accès et un refresh token",
+     *     description="Permet à un utilisateur (admin ou client) de se connecter avec son numéro de téléphone et d'obtenir un token d'accès",
      *     operationId="login",
      *     tags={"Authentification"},
      *     @OA\RequestBody(
@@ -40,41 +40,32 @@ class TestController extends Controller
      *             oneOf={
      *                 @OA\Schema(
      *                     title="Connexion Admin",
-     *                     required={"email", "password"},
-     *                     @OA\Property(property="email", type="string", format="email", example="admin@example.com"),
-     *                     @OA\Property(property="password", type="string", format="password", example="password")
+     *                     required={"telephone"},
+     *                     @OA\Property(property="telephone", type="string", example="+221771234567")
      *                 ),
      *                 @OA\Schema(
      *                     title="Connexion Client",
-     *                     required={"email", "password", "codeSms"},
-     *                     @OA\Property(property="email", type="string", format="email", example="client@example.com"),
-     *                     @OA\Property(property="password", type="string", format="password", example="password"),
+     *                     required={"telephone", "codeSms"},
+     *                     @OA\Property(property="telephone", type="string", example="+221771234567"),
      *                     @OA\Property(property="codeSms", type="string", example="0AjbUW", description="Code de vérification SMS requis pour la première connexion")
      *                 )
      *             }
      *         )
      *     ),
      *     @OA\Response(
-     *         response=200,
-     *         description="Connexion réussie",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Connexion réussie"),
-     *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="user", type="object",
-     *                     @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
-     *                     @OA\Property(property="nom", type="string", example="Admin"),
-     *                     @OA\Property(property="prenom", type="string", example="System"),
-     *                     @OA\Property(property="email", type="string", example="admin@example.com"),
-     *                     @OA\Property(property="type", type="string", enum={"admin", "client"}, example="admin")
-     *                 ),
-     *             @OA\Property(property="access_token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."),
-     *             @OA\Property(property="token_type", type="string", example="Bearer"),
-     *             @OA\Property(property="expires_in", type="integer", example=3600)
-     *             )
-     *         )
-     *     ),
+      *         response=200,
+      *         description="Connexion réussie",
+      *         @OA\JsonContent(
+      *             type="object",
+      *             @OA\Property(property="success", type="boolean", example=true),
+      *             @OA\Property(property="message", type="string", example="Connexion réussie"),
+      *             @OA\Property(property="data", type="object",
+      *                 @OA\Property(property="access_token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."),
+      *                 @OA\Property(property="token_type", type="string", example="Bearer"),
+      *                 @OA\Property(property="expires_in", type="integer", example=3600)
+      *             )
+      *         )
+      *     ),
      *     @OA\Response(
      *         response=400,
      *         description="Code SMS requis pour la première connexion",
@@ -86,11 +77,11 @@ class TestController extends Controller
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Identifiants incorrects ou code SMS invalide",
+     *         description="Numéro de téléphone introuvable ou code SMS invalide",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Identifiants incorrects ou code SMS invalide")
+     *             @OA\Property(property="message", type="string", example="Numéro de téléphone introuvable ou code SMS invalide")
      *         )
      *     ),
      *     @OA\Response(
@@ -109,22 +100,21 @@ class TestController extends Controller
     {
         try {
             Log::info('=== DÉBUT DE LA MÉTHODE LOGIN ===');
-            Log::info('Email reçu: ' . $request->email);
+            Log::info('Téléphone reçu: ' . $request->telephone);
 
             $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string',
+                'telephone' => 'required|string',
                 'codeSms' => 'nullable|string',
             ]);
 
-            Log::info('Validation passée pour email: ' . $request->email);
+            Log::info('Validation passée pour téléphone: ' . $request->telephone);
 
         // Essayer d'abord de trouver un admin
         try {
-            $user = User::where('email', $request->email)->where('type', 'admin')->first();
+            $user = User::where('telephone', $request->telephone)->where('type', 'admin')->first();
             Log::info('Admin trouvé: ' . ($user ? 'Oui' : 'Non'));
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la recherche d\'admin pour ' . $request->email . ': ' . $e->getMessage());
+            Log::error('Erreur lors de la recherche d\'admin pour ' . $request->telephone . ': ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur interne lors de la recherche d\'utilisateur'
@@ -134,10 +124,10 @@ class TestController extends Controller
         // Si pas trouvé, chercher un client
         if (!$user) {
             try {
-                $user = User::where('email', $request->email)->where('type', 'client')->first();
+                $user = User::where('telephone', $request->telephone)->where('type', 'client')->first();
                 Log::info('Client trouvé: ' . ($user ? 'Oui' : 'Non'));
             } catch (\Exception $e) {
-                Log::error('Erreur lors de la recherche de client pour ' . $request->email . ': ' . $e->getMessage());
+                Log::error('Erreur lors de la recherche de client pour ' . $request->telephone . ': ' . $e->getMessage());
                 return response()->json([
                     'success' => false,
                     'message' => 'Erreur interne lors de la recherche d\'utilisateur'
@@ -145,24 +135,23 @@ class TestController extends Controller
             }
         }
 
-        if ($user) {
-            Log::info('Type utilisateur: ' . $user->type);
-            Log::info('Mot de passe haché: ' . $user->password);
-            Log::info('Vérification mot de passe: ' . (Hash::check($request->password, $user->password) ? 'Succès' : 'Échec'));
-        }
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            Log::error('Échec de connexion: Identifiants incorrects pour ' . $request->email);
+        if (!$user) {
+            Log::error('Échec de connexion: Numéro de téléphone introuvable pour ' . $request->telephone);
             return response()->json([
                 'success' => false,
-                'message' => 'Identifiants incorrects'
+                'message' => 'Numéro de téléphone introuvable'
             ], 401);
         }
 
         // Pour les clients, vérifier le code SMS lors de la première connexion
         if ($user->type === 'client') {
             // Si c'est la première connexion (pas encore de token créé)
-            $existingTokens = $user->tokens()->count();
+            try {
+                $existingTokens = DB::table('oauth_access_tokens')->where('user_id', $user->id)->count();
+            } catch (\Exception $e) {
+                Log::error('Erreur lors du comptage des tokens: ' . $e->getMessage());
+                $existingTokens = 0; // Par défaut, considérer qu'il n'y a pas de tokens
+            }
 
             if ($existingTokens === 0) {
                 // Première connexion - code SMS requis
@@ -188,7 +177,7 @@ class TestController extends Controller
         // Créer le token d'accès
         try {
             Log::info('=== DÉBUT CRÉATION TOKEN ===');
-            Log::info('Utilisateur: ' . $user->email . ' (ID: ' . $user->id . ', Type: ' . $user->type . ')');
+            Log::info('Utilisateur: ' . $user->telephone . ' (ID: ' . $user->id . ', Type: ' . $user->type . ')');
 
             // Vérifier la base de données
             try {
@@ -216,28 +205,44 @@ class TestController extends Controller
             }
 
             // Vérifier les clients OAuth
-            $clientsCount = DB::table('oauth_clients')->count();
-            Log::info('Nombre de clients OAuth: ' . $clientsCount);
+            try {
+                $clientsCount = DB::table('oauth_clients')->count();
+                Log::info('Nombre de clients OAuth: ' . $clientsCount);
+            } catch (\Exception $e) {
+                Log::error('Erreur lors du comptage des clients OAuth: ' . $e->getMessage());
+                $clientsCount = 0;
+            }
 
-            $personalClientsCount = DB::table('oauth_personal_access_clients')->count();
-            Log::info('Nombre de clients personnels: ' . $personalClientsCount);
+            try {
+                $personalClientsCount = DB::table('oauth_personal_access_clients')->count();
+                Log::info('Nombre de clients personnels: ' . $personalClientsCount);
+            } catch (\Exception $e) {
+                Log::error('Erreur lors du comptage des clients personnels: ' . $e->getMessage());
+                $personalClientsCount = 0;
+            }
 
             // Créer le token
             Log::info('Tentative de création du token...');
-            $token = $user->createToken('API TOKEN');
-            Log::info('Token créé avec succès!');
+            try {
+                $token = $user->createToken('API TOKEN');
+                Log::info('Token créé avec succès!');
+            } catch (\Exception $tokenException) {
+                Log::error('Erreur lors de la création du token: ' . $tokenException->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur lors de la création du token d\'accès',
+                    'debug' => [
+                        'error' => $tokenException->getMessage(),
+                        'user_id' => $user->id,
+                        'user_type' => $user->type
+                    ]
+                ], 500);
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Connexion réussie',
                 'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'nom' => $user->nom,
-                        'prenom' => $user->prenom,
-                        'email' => $user->email,
-                        'type' => $user->type,
-                    ],
                     'access_token' => $token->accessToken,
                     'token_type' => 'Bearer',
                     'expires_in' => 3600,
@@ -254,7 +259,7 @@ class TestController extends Controller
             // Informations de diagnostic
             $debugInfo = [
                 'user_id' => $user->id ?? 'N/A',
-                'user_email' => $user->email ?? 'N/A',
+                'user_telephone' => $user->telephone ?? 'N/A',
                 'user_type' => $user->type ?? 'N/A',
                 'private_key_exists' => file_exists(storage_path('oauth-private.key')),
                 'public_key_exists' => file_exists(storage_path('oauth-public.key')),
@@ -263,7 +268,7 @@ class TestController extends Controller
             try {
                 $debugInfo['oauth_clients_count'] = DB::table('oauth_clients')->count();
                 $debugInfo['personal_clients_count'] = DB::table('oauth_personal_access_clients')->count();
-                $debugInfo['user_tokens_count'] = $user->tokens()->count();
+                $debugInfo['user_tokens_count'] = DB::table('oauth_access_tokens')->where('user_id', $user->id)->count();
             } catch (\Exception $dbError) {
                 $debugInfo['db_error'] = $dbError->getMessage();
             }
@@ -286,20 +291,13 @@ class TestController extends Controller
             'success' => true,
             'message' => 'Connexion réussie',
             'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'nom' => $user->nom,
-                    'prenom' => $user->prenom,
-                    'email' => $user->email,
-                    'type' => $user->type,
-                ],
                 'access_token' => $token->accessToken,
                 'token_type' => 'Bearer',
                 'expires_in' => 3600, // 1 heure
             ]
         ], 200, [], JSON_UNESCAPED_SLASHES);
         } catch (\Exception $e) {
-            Log::error('Erreur générale dans la méthode login pour ' . $request->email . ': ' . $e->getMessage());
+            Log::error('Erreur générale dans la méthode login pour ' . $request->telephone . ': ' . $e->getMessage());
             Log::error('Trace: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,

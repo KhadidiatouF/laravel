@@ -33,7 +33,6 @@ class ArchiveExpiredBlockedAccounts implements ShouldQueue
 
         // Trouver les comptes épargne bloqués dont la date de début de blocage est dépassée
         $accountsToArchive = Compte::where('statut', 'bloqué')
-            ->where('type', 'epargne')
             ->where('date_debut_bloquage', '<=', now())
             ->get();
 
@@ -51,7 +50,6 @@ class ArchiveExpiredBlockedAccounts implements ShouldQueue
             Log::info('Compte épargne bloqué archivé et déplacé vers Neon', [
                 'compte_id' => $compte->id,
                 'numero_compte' => $compte->numCompte,
-                'type' => $compte->type,
                 'date_debut_bloquage' => $compte->date_debut_bloquage,
                 'date_fin_bloquage' => $compte->date_fin_bloquage,
             ]);

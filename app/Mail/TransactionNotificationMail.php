@@ -2,28 +2,29 @@
 
 namespace App\Mail;
 
+use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class AuthenticationEmail extends Mailable
+class TransactionNotificationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public $transaction;
     public $client;
-    public $password;
-    public $code;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($client, $password, $code)
+    public function __construct(Transaction $transaction, User $client)
     {
+        $this->transaction = $transaction;
         $this->client = $client;
-        $this->password = $password;
-        $this->code = $code;
     }
 
     /**
@@ -32,7 +33,7 @@ class AuthenticationEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Vos informations de connexion - Banque Example',
+            subject: 'Notification de transaction - ' . ucfirst($this->transaction->type) . ' - Banque API',
         );
     }
 
@@ -42,11 +43,10 @@ class AuthenticationEmail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.authentication',
+            view: 'emails.transaction-notification',
             with: [
+                'transaction' => $this->transaction,
                 'client' => $this->client,
-                'password' => $this->password,
-                'code' => $this->code,
             ],
         );
     }
