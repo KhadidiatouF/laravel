@@ -66,12 +66,18 @@ RUN chown laravel:laravel .env
 
 # Générer la clé d'application et optimiser
 USER laravel
-RUN php artisan key:generate --force
+RUN php artisan key:generate --force \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 USER root
 
 # Copier le script d'entrée (optionnel)
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-EXPOSE 9000
-CMD ["php-fpm"]
+# Exposer le port 8000
+EXPOSE 8000
+
+# Commande par défaut
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
