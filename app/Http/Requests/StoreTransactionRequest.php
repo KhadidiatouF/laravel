@@ -25,7 +25,6 @@ class StoreTransactionRequest extends FormRequest
             if ($this->input('type') === 'transfert') {
                 $rules['numero_destinataire'] = 'required|string';
             } elseif ($this->input('type') === 'payement') {
-                // Pour les paiements : soit numero_destinataire soit code_marchand
                 $rules['numero_destinataire'] = 'nullable|string';
                 $rules['code_marchand'] = 'nullable|string';
             }
