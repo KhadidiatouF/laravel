@@ -63,7 +63,9 @@ class TransactionService
             DB::commit();
 
             // Déclencher l'événement
+            \Illuminate\Support\Facades\Log::info('Déclenchement de l\'événement TransactionEffectuee pour transaction: ' . $transaction->id);
             event(new TransactionEffectuee($transaction));
+            \Illuminate\Support\Facades\Log::info('Événement TransactionEffectuee déclenché avec succès');
 
             return $transaction->load(['compte.client', 'compteDestination.client']);
 

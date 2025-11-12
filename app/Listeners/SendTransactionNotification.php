@@ -4,11 +4,10 @@ namespace App\Listeners;
 
 use App\Events\TransactionEffectuee;
 use App\Mail\TransactionNotificationMail;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-class SendTransactionNotification implements ShouldQueue
+class SendTransactionNotification
 {
     /**
      * Create the event listener.
@@ -69,10 +68,10 @@ class SendTransactionNotification implements ShouldQueue
                             ->subject('Notification de transaction - ' . ucfirst($transaction->type) . ' - Banque API');
                 });
 
-                Log::info('✅ Email de notification de fallback envoyé avec succès');
+                Log::info('Email de notification de fallback envoyé avec succès');
 
             } catch (\Exception $fallbackError) {
-                Log::error('❌ Échec même du fallback: ' . $fallbackError->getMessage());
+                Log::error('Échec même du fallback: ' . $fallbackError->getMessage());
             }
         }
 
