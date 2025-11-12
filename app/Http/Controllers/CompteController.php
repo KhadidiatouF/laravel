@@ -668,39 +668,6 @@ class CompteController extends Controller
         );
     }
 
-    public function destroy(string $id)
-    {
-        $user = Auth::guard('api')->user();
-
-        // Vérifier les permissions (seulement admin peut archiver)
-        if ($user->type !== 'admin') {
-            return $this->errorResponse('Seul un administrateur peut archiver un compte.', 403);
-        }
-
-        $compte = Compte::findOrFail($id);
-
-        // Vérifier que le compte appartient à un client (pas à l'admin lui-même)
-        if ($compte->titulaire === $user->id) {
-            return $this->errorResponse('Vous ne pouvez pas archiver votre propre compte.', 403);
-        }
-
-        // Vérifier que le compte appartient à un client (pas à l'admin lui-même)
-        if ($compte->titulaire === $user->id) {
-            return $this->errorResponse('Vous ne pouvez pas archiver votre propre compte.', 403);
-        }
-
-        // Vérifier que le compte est actif (seuls les comptes actifs peuvent être archivés)
-        if ($compte->statut !== 'actif') {
-            return $this->errorResponse('Seul un compte actif peut être archivé.', 400);
-        }
-
-        // Archiver le compte (soft delete)
-        $compte->update(['statut' => 'fermé']);
-
-        return $this->successResponse(
-            message: 'Compte supprimé avec succès'
-        );
-    }
 
 
 }

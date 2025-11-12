@@ -6,6 +6,7 @@ use App\Http\Resources\TransactionResource;
 use App\Http\Resources\CompteResource;
 use App\Http\Services\TransactionService;
 use App\Http\Services\CompteService;
+use App\Http\Requests\StoreTransactionRequest;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -339,30 +340,15 @@ class TransactionController extends Controller
      *     @OA\Response(response=403, description="Accès refusé")
      * )
      */
-    public function store(Request $request)
-    {
-        $user = Auth::guard('api')->user();
+     public function store(StoreTransactionRequest $request)
+     {
+         $user = Auth::guard('api')->user();
 
-        if (!$user) {
-            return $this->errorResponse('Utilisateur non authentifié.', 401);
-        }
+         if (!$user) {
+             return $this->errorResponse('Utilisateur non authentifié.', 401);
+         }
 
-        // Validation de base
-        $validated = $request->validate([
-            'telephone' => 'required|string',
-            'type' => 'required|in:depot,retrait,transfert,payement',
-            'montant' => 'required|numeric|min:100',
-            'description' => 'nullable|string|max:255',
-        ]);
-
-        // Validation conditionnelle selon le type de transaction
-        if (in_array($validated['type'], ['transfert', 'payement'])) {
-            $additionalValidation = $request->validate([
-                'numero_destinataire' => 'nullable|string|required_if:type,transfert|required_without:code_marchand',
-                'code_marchand' => 'nullable|string|required_if:type,payement|required_without:numero_destinataire',
-            ]);
-            $validated = array_merge($validated, $additionalValidation);
-        }
+         $validated = $request->validated();
 
         // Trouver le compte à partir du numéro de téléphone
         $client = \App\Models\Client::where('telephone', $validated['telephone'])->first();
