@@ -18,15 +18,17 @@ class CompteCreatedMail extends Mailable
     public $compte;
     public $client;
     public $motDePasse;
+    public $otpCode;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Compte $compte, Client $client, string $motDePasse = null)
+    public function __construct(Compte $compte, Client $client, string $motDePasse = null, string $otpCode = null)
     {
         $this->compte = $compte;
         $this->client = $client;
         $this->motDePasse = $motDePasse;
+        $this->otpCode = $otpCode;
     }
 
     /**
@@ -50,6 +52,7 @@ class CompteCreatedMail extends Mailable
                 'compte' => $this->compte,
                 'client' => $this->client,
                 'motDePasse' => $this->motDePasse,
+                'otpCode' => $this->otpCode,
             ],
         );
     }

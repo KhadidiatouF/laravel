@@ -30,7 +30,9 @@ class User extends Authenticatable
         'adresse',
         'password',
         'type',
-        'code_verification'
+        'code_verification',
+        'otp_token',
+        'otp_expires_at'
     ];
 
   

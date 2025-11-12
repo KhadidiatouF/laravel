@@ -156,21 +156,30 @@ class TestController extends Controller
             if ($existingTokens === 0) {
                 // Première connexion - code SMS requis
                 if (empty($request->codeSms)) {
+                    Log::warning('Code SMS manquant pour première connexion téléphone: ' . $request->telephone);
                     return response()->json([
                         'success' => false,
                         'message' => 'Code de vérification requis pour la première connexion'
                     ], 400);
                 }
 
-                if ($request->codeSms !== $user->code_verification) {
+                // Vérification STRICTE : le code doit exister ET correspondre exactement
+                if (!$user->code_verification || trim($request->codeSms) !== trim($user->code_verification)) {
+                    Log::warning('Code SMS invalide - Téléphone: ' . $request->telephone .
+                               ', Code fourni: "' . $request->codeSms . '"' .
+                               ', Code attendu: "' . ($user->code_verification ?? 'NULL') . '"');
                     return response()->json([
                         'success' => false,
-                        'message' => 'Code de vérification invalide'
+                        'message' => 'Code de vérification invalide pour ce numéro de téléphone'
                     ], 401);
                 }
 
                 // Marquer l'utilisateur comme vérifié (supprimer le code)
                 $user->update(['code_verification' => null]);
+                Log::info('Première connexion validée pour téléphone: ' . $request->telephone);
+            } else {
+                // Connexions suivantes - pas de vérification de code SMS
+                Log::info('Connexion existante autorisée pour téléphone: ' . $request->telephone);
             }
         }
 

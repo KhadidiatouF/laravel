@@ -119,9 +119,21 @@
             </div>
             @endif
 
+            @if($otpCode)
+            <div class="credentials">
+                <h4>📱 Code d'activation par SMS</h4>
+                <p><strong>Code OTP :</strong> {{ $otpCode }}</p>
+                <p><strong>Numéro de téléphone :</strong> {{ $client->telephone }}</p>
+                <p style="color: #856404; font-size: 14px;">
+                    📨 Ce code vous a également été envoyé par SMS. Il est valide pendant 2 minutes.
+                </p>
+            </div>
+            @endif
+
             <div class="warning">
-                <h4>🔔 Première connexion</h4>
-                <p>Pour votre première connexion, vous devrez saisir le code de vérification qui vous sera envoyé par SMS.</p>
+                <h4>🔔 Activation du compte</h4>
+                <p>Pour activer votre compte, utilisez le code OTP envoyé par SMS ou visible ci-dessus.</p>
+                <p>Appelez l'endpoint <code>/verify-otp</code> avec votre numéro de téléphone et le code.</p>
             </div>
 
             <p>Si vous avez des questions concernant votre compte, n'hésitez pas à nous contacter.</p>

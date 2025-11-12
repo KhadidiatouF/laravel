@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('compte_id');
-            $table->enum('type', ['depot', 'retrait', 'transfert', 'virement']);
+            $table->enum('type', ['depot', 'retrait', 'transfert', 'virement', 'payement']);
             $table->decimal('montant', 15, 2);
             $table->string('description')->nullable();
             $table->uuid('compte_destination_id')->nullable(); // Pour les transferts

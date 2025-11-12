@@ -16,23 +16,148 @@
         }
     ],
     "paths": {
+        "/api/verify-otp": {
+            "post": {
+                "tags": [
+                    "Activation"
+                ],
+                "summary": "Vérifier le code OTP et activer le compte",
+                "description": "Vérifier et activer un compte avec OTP",
+                "operationId": "28d4162d4240a71f0d6d939b7e6f7be2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "telephone",
+                                    "otp_code",
+                                    "otp_token"
+                                ],
+                                "properties": {
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "+221771234567"
+                                    },
+                                    "otp_code": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "otp_token": {
+                                        "type": "string",
+                                        "example": "random_token_here"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Compte activé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte activé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides"
+                    },
+                    "404": {
+                        "description": "Token OTP invalide"
+                    },
+                    "410": {
+                        "description": "Code OTP expiré"
+                    },
+                    "401": {
+                        "description": "Code OTP incorrect"
+                    }
+                }
+            }
+        },
+        "/api/resend-otp": {
+            "post": {
+                "tags": [
+                    "Activation"
+                ],
+                "summary": "Renvoyer un code OTP",
+                "description": "Renvoyer un nouveau code OTP",
+                "operationId": "65c54a1725154a2da81dcf02c7c7cd03",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "telephone"
+                                ],
+                                "properties": {
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "+221771234567"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Nouveau code OTP envoyé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nouveau code OTP envoyé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/comptes": {
             "get": {
                 "tags": [
                     "Comptes"
                 ],
                 "summary": "Lister les comptes",
-                "description": "Lister tous les comptes (Admin) ou les comptes du client connecté",
+                "description": "Récupère la liste des comptes. Les clients voient uniquement leurs comptes, les admins voient tous les comptes actifs.",
                 "operationId": "c09c55b936e3520140768760edfa911e",
                 "parameters": [
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Numéro de page",
+                        "description": "Numéro de page pour la pagination",
                         "required": false,
                         "schema": {
                             "type": "integer",
-                            "default": 1
+                            "default": 1,
+                            "minimum": 1
                         }
                     },
                     {
@@ -43,27 +168,14 @@
                         "schema": {
                             "type": "integer",
                             "default": 10,
-                            "maximum": 100
-                        }
-                    },
-                    {
-                        "name": "type",
-                        "in": "query",
-                        "description": "Filtrer par type",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "courant",
-                                "epargne",
-                                "cheque"
-                            ]
+                            "maximum": 100,
+                            "minimum": 1
                         }
                     },
                     {
                         "name": "statut",
                         "in": "query",
-                        "description": "Filtrer par statut",
+                        "description": "Filtrer par statut du compte",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -77,19 +189,22 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Recherche par titulaire ou numéro",
+                        "description": "Recherche par numéro de compte, nom ou prénom du titulaire",
                         "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 255,
+                            "minLength": 1
                         }
                     },
                     {
                         "name": "sort",
                         "in": "query",
-                        "description": "Tri",
+                        "description": "Champ de tri",
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "default": "dateCreation",
                             "enum": [
                                 "dateCreation",
                                 "solde",
@@ -100,10 +215,11 @@
                     {
                         "name": "order",
                         "in": "query",
-                        "description": "Ordre",
+                        "description": "Ordre de tri",
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "default": "desc",
                             "enum": [
                                 "asc",
                                 "desc"
@@ -113,7 +229,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des comptes",
+                        "description": "Liste des comptes récupérée avec succès",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -122,17 +238,117 @@
                                             "type": "boolean",
                                             "example": true
                                         },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Comptes récupérés avec succès"
+                                        },
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/Compte"
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                    },
+                                                    "numeroCompte": {
+                                                        "type": "string",
+                                                        "example": "C-20251025-ABCD"
+                                                    },
+                                                    "titulaire": {
+                                                        "properties": {
+                                                            "nom": {
+                                                                "type": "string",
+                                                                "example": "Diallo"
+                                                            },
+                                                            "prenom": {
+                                                                "type": "string",
+                                                                "example": "Mamadou"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "solde": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 150000.5
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "courant",
+                                                            "epargne"
+                                                        ],
+                                                        "example": "courant"
+                                                    },
+                                                    "statut": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "actif",
+                                                            "inactif",
+                                                            "bloqué"
+                                                        ],
+                                                        "example": "actif"
+                                                    },
+                                                    "dateCreation": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-10-25T17:33:20Z"
+                                                    }
+                                                },
+                                                "type": "object"
                                             }
                                         },
                                         "pagination": {
-                                            "$ref": "#/components/schemas/Pagination"
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                }
+                                            },
+                                            "type": "object"
                                         },
                                         "links": {
-                                            "$ref": "#/components/schemas/Links"
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "example": "http://api.banque.example.com/api/v1/comptes?page=1"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "example": "http://api.banque.example.com/api/v1/comptes?page=3"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "example": "http://api.banque.example.com/api/v1/comptes?page=2"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -141,10 +357,44 @@
                         }
                     },
                     "401": {
-                        "description": "Non autorisé"
+                        "description": "Token d'authentification manquant ou invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur non authentifié."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Accès refusé"
+                        "description": "Accès refusé - Permissions insuffisantes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès refusé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -290,6 +540,82 @@
                     },
                     "403": {
                         "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/comptes/{numero}/solde": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Consulter le solde d'un compte",
+                "description": "Récupérer le solde d'un compte",
+                "operationId": "e1e5fbb5e6274c3100707b2eb58a8e52",
+                "parameters": [
+                    {
+                        "name": "numero",
+                        "in": "path",
+                        "description": "Numéro du compte",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "C-20251025-ABCD"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Solde du compte",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "numeroCompte": {
+                                                    "type": "string",
+                                                    "example": "C-20251025-ABCD"
+                                                },
+                                                "solde": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 150000
+                                                },
+                                                "devise": {
+                                                    "type": "string",
+                                                    "example": "FCFA"
+                                                },
+                                                "dateDerniereMiseAJour": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "403": {
+                        "description": "Accès refusé - Compte non autorisé"
+                    },
+                    "404": {
+                        "description": "Compte non trouvé"
                     }
                 },
                 "security": [
@@ -1228,15 +1554,6 @@
                         "type": "string",
                         "example": "Mamadou Diallo"
                     },
-                    "type": {
-                        "type": "string",
-                        "enum": [
-                            "courant",
-                            "epargne",
-                            "cheque"
-                        ],
-                        "example": "courant"
-                    },
                     "solde": {
                         "type": "number",
                         "format": "float",
@@ -1269,28 +1586,6 @@
                     "motifBlocage": {
                         "type": "string",
                         "example": null,
-                        "nullable": true
-                    },
-                    "informationsBlocage": {
-                        "description": "Informations de blocage pour les comptes épargne bloqués",
-                        "properties": {
-                            "dateDebutBlocage": {
-                                "type": "string",
-                                "format": "date-time",
-                                "example": "2025-10-30T12:00:00Z"
-                            },
-                            "dateFinBlocage": {
-                                "type": "string",
-                                "format": "date-time",
-                                "example": "2025-11-02T12:00:00Z"
-                            },
-                            "dureeBlocageJours": {
-                                "description": "Durée du blocage en jours",
-                                "type": "integer",
-                                "example": 3
-                            }
-                        },
-                        "type": "object",
                         "nullable": true
                     },
                     "metadata": {
@@ -1466,6 +1761,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Activation",
+            "description": "Endpoints d'activation de comptes clients"
+        },
         {
             "name": "Comptes",
             "description": "Comptes"

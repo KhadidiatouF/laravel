@@ -16,14 +16,12 @@ class Compte extends Model
         'titulaire',
         'date_creation',
         'statut',
-        'date_debut_bloquage',
-        'date_fin_bloquage',
+       
     ];
 
     protected $casts = [
         'date_creation' => 'date',
-        'date_debut_bloquage' => 'datetime',
-        'date_fin_bloquage' => 'datetime',
+     
     ];
 
     public function client()
@@ -75,9 +73,20 @@ class Compte extends Model
 
     public function getSoldeAttribute(): float
     {
+        // Calculer le solde basé sur les transactions
         $depot = $this->transactions()->where('type', 'depot')->sum('montant');
         $retrait = $this->transactions()->where('type', 'retrait')->sum('montant');
         return $depot - $retrait;
+    }
+
+    /**
+     * Mutateur pour définir le solde (non utilisé directement, calculé automatiquement)
+     */
+    public function setSoldeAttribute($value): void
+    {
+        // Le solde est calculé automatiquement via les transactions
+        // Cette méthode est présente pour la complétude mais ne devrait pas être utilisée
+        throw new \InvalidArgumentException('Le solde ne peut pas être défini directement. Utilisez les transactions.');
     }
 
     // Méthode pour vérifier si le compte est archivé

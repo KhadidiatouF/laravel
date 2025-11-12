@@ -82,4 +82,15 @@ class TransactionFactory extends Factory
             ];
         });
     }
+
+    public function payement()
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'type' => 'payement',
+                'compte_destination_id' => null,
+                'statut' => 'validee',
+            ];
+        });
+    }
 }

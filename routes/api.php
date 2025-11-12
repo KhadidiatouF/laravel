@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CompteController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\ActivationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,11 +27,11 @@ Route::get('/api/documentation', function () {
 });
 
 
-// Login (obtenir token)
 Route::post('/login', [TestController::class, 'login']);
 
-// Test email
-Route::get('/test-email', [TestController::class, 'testEmail']);
+Route::post('/verify-otp', [ActivationController::class, 'verifyOtp']);
+Route::post('/resend-otp', [ActivationController::class, 'resendOtp']);
+
 
 // Route de diagnostic
 Route::get('/diagnostic', [TestController::class, 'diagnostic']);
@@ -40,6 +41,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
     // Routes pour les comptes
     Route::get('comptes', [CompteController::class, 'index']);
     Route::post('comptes', [CompteController::class, 'store'])->middleware('logging');
+    Route::get('comptes/{numero}/solde', [CompteController::class, 'getSolde']);
 
     // Routes pour les transactions
     Route::get('transactions', [TransactionController::class, 'index']);

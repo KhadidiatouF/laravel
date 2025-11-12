@@ -21,10 +21,10 @@ class TransactionSeeder extends Seeder
         $this->command->info('Création des transactions...');
 
         // Créer différents types de transactions
-        Transaction::factory(20)->depot()->create();
-        Transaction::factory(15)->retrait()->create();
-        Transaction::factory(10)->transfert()->create();
-        Transaction::factory(5)->validee()->create();
+        Transaction::factory(5)->depot()->create();
+        Transaction::factory(5)->retrait()->create();
+        Transaction::factory(0)->transfert()->create();
+        Transaction::factory(5)->payement()->create();
         Transaction::factory(3)->rejetee()->create();
 
         $this->command->info('Transactions créées avec succès !');

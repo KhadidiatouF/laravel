@@ -8,6 +8,8 @@ use App\Http\Resources\CompteResource;
 use App\Http\Requests\StoreCompteRequest;
 use App\Traits\ApiResponseTrait;
 use App\Mail\CompteCreatedMail;
+use App\Http\Services\SmsService;
+use App\Http\Services\OtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -49,18 +51,11 @@ use App\Events\CompteCreated;
  *     @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
  *     @OA\Property(property="numeroCompte", type="string", example="C-20251025-ABCD"),
  *     @OA\Property(property="titulaire", type="string", example="Mamadou Diallo"),
- *     @OA\Property(property="type", type="string", enum={"courant", "epargne", "cheque"}, example="courant"),
  *     @OA\Property(property="solde", type="number", format="float", example=500000),
  *     @OA\Property(property="devise", type="string", enum={"FCFA", "XOF", "EUR", "USD"}, example="FCFA"),
  *     @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
  *     @OA\Property(property="statut", type="string", enum={"actif", "inactif", "bloqué"}, example="actif"),
  *     @OA\Property(property="motifBlocage", type="string", nullable=true, example=null),
- *     @OA\Property(property="informationsBlocage", type="object", nullable=true,
- *         description="Informations de blocage pour les comptes épargne bloqués",
- *         @OA\Property(property="dateDebutBlocage", type="string", format="date-time", example="2025-10-30T12:00:00Z"),
- *         @OA\Property(property="dateFinBlocage", type="string", format="date-time", example="2025-11-02T12:00:00Z"),
- *         @OA\Property(property="dureeBlocageJours", type="integer", example=3, description="Durée du blocage en jours")
- *     ),
  *     @OA\Property(property="metadata", type="object",
  *         @OA\Property(property="derniereModification", type="string", format="date-time", example="2025-10-25T17:33:20Z"),
  *         @OA\Property(property="version", type="integer", example=1)
@@ -71,76 +66,122 @@ class CompteController extends Controller
 {
     use ApiResponseTrait;
 
+    protected $smsService;
+    protected $otpService;
+
+    public function __construct(SmsService $smsService, OtpService $otpService)
+    {
+        $this->smsService = $smsService;
+        $this->otpService = $otpService;
+    }
+
     /**
      * Lister tous les comptes (Admin) ou les comptes du client connecté
      *
      * @OA\Get(
      *     path="/api/v1/comptes",
      *     summary="Lister les comptes",
+     *     description="Récupère la liste des comptes. Les clients voient uniquement leurs comptes, les admins voient tous les comptes actifs.",
      *     tags={"Comptes"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
-     *         description="Numéro de page",
+     *         description="Numéro de page pour la pagination",
      *         required=false,
-     *         @OA\Schema(type="integer", default=1)
+     *         @OA\Schema(type="integer", default=1, minimum=1)
      *     ),
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         description="Nombre d'éléments par page",
      *         required=false,
-     *         @OA\Schema(type="integer", default=10, maximum=100)
-     *     ),
-     *     @OA\Parameter(
-     *         name="type",
-     *         in="query",
-     *         description="Filtrer par type",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"courant", "epargne", "cheque"})
+     *         @OA\Schema(type="integer", default=10, minimum=1, maximum=100)
      *     ),
      *     @OA\Parameter(
      *         name="statut",
      *         in="query",
-     *         description="Filtrer par statut",
+     *         description="Filtrer par statut du compte",
      *         required=false,
      *         @OA\Schema(type="string", enum={"actif", "inactif", "bloqué"})
      *     ),
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Recherche par titulaire ou numéro",
+     *         description="Recherche par numéro de compte, nom ou prénom du titulaire",
      *         required=false,
-     *         @OA\Schema(type="string")
+     *         @OA\Schema(type="string", minLength=1, maxLength=255)
      *     ),
      *     @OA\Parameter(
      *         name="sort",
      *         in="query",
-     *         description="Tri",
+     *         description="Champ de tri",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"dateCreation", "solde", "titulaire"})
+     *         @OA\Schema(type="string", enum={"dateCreation", "solde", "titulaire"}, default="dateCreation")
      *     ),
      *     @OA\Parameter(
      *         name="order",
      *         in="query",
-     *         description="Ordre",
+     *         description="Ordre de tri",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"asc", "desc"})
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Liste des comptes",
+     *         description="Liste des comptes récupérée avec succès",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Compte")),
-     *             @OA\Property(property="pagination", ref="#/components/schemas/Pagination"),
-     *             @OA\Property(property="links", ref="#/components/schemas/Links")
+     *             @OA\Property(property="message", type="string", example="Comptes récupérés avec succès"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                     @OA\Property(property="numeroCompte", type="string", example="C-20251025-ABCD"),
+     *                     @OA\Property(property="titulaire", type="object",
+     *                         @OA\Property(property="nom", type="string", example="Diallo"),
+     *                         @OA\Property(property="prenom", type="string", example="Mamadou")
+     *                     ),
+     *                     @OA\Property(property="solde", type="number", format="float", example=150000.50),
+     *                     @OA\Property(property="type", type="string", enum={"courant", "epargne"}, example="courant"),
+     *                     @OA\Property(property="statut", type="string", enum={"actif", "inactif", "bloqué"}, example="actif"),
+     *                     @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-25T17:33:20Z")
+     *                 )
+     *             ),
+     *             @OA\Property(property="pagination", type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="per_page", type="integer", example=10),
+     *                 @OA\Property(property="total", type="integer", example=25),
+     *                 @OA\Property(property="last_page", type="integer", example=3),
+     *                 @OA\Property(property="from", type="integer", example=1),
+     *                 @OA\Property(property="to", type="integer", example=10)
+     *             ),
+     *             @OA\Property(property="links", type="object",
+     *                 @OA\Property(property="first", type="string", example="http://api.banque.example.com/api/v1/comptes?page=1"),
+     *                 @OA\Property(property="last", type="string", example="http://api.banque.example.com/api/v1/comptes?page=3"),
+     *                 @OA\Property(property="prev", type="string", nullable=true, example=null),
+     *                 @OA\Property(property="next", type="string", example="http://api.banque.example.com/api/v1/comptes?page=2")
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=401, description="Non autorisé"),
-     *     @OA\Response(response=403, description="Accès refusé")
+     *     @OA\Response(
+     *         response=401,
+     *         description="Token d'authentification manquant ou invalide",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Utilisateur non authentifié.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Accès refusé - Permissions insuffisantes",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Accès refusé.")
+     *         )
+     *     )
      * )
      */
     public function index(Request $request)
@@ -172,7 +213,7 @@ class CompteController extends Controller
             $query->where('statut', 'actif');
         }
 
-    
+
         if (!empty($validated['statut'])) {
             $query->where('statut', $validated['statut']);
         }
@@ -191,7 +232,7 @@ class CompteController extends Controller
         // Appliquer le tri
         $sortField = match ($validated['sort'] ?? 'dateCreation') {
             'dateCreation' => 'date_creation',
-            'solde' => 'created_at', 
+            'solde' => 'created_at',
             'titulaire' => 'titulaire',
             default => 'date_creation',
         };
@@ -204,6 +245,76 @@ class CompteController extends Controller
         $comptes = $query->paginate($perPage);
 
         return $this->paginatedResponse($comptes, CompteResource::class);
+    }
+
+    /**
+     * Récupérer le solde d'un compte
+     *
+     * @OA\Get(
+     *     path="/api/v1/comptes/{numero}/solde",
+     *     summary="Consulter le solde d'un compte",
+     *     tags={"Comptes"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="numero",
+     *         in="path",
+     *         required=true,
+     *         description="Numéro du compte",
+     *         @OA\Schema(type="string", example="C-20251025-ABCD")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Solde du compte",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="numeroCompte", type="string", example="C-20251025-ABCD"),
+     *                 @OA\Property(property="solde", type="number", format="float", example=150000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateDerniereMiseAJour", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Non autorisé"),
+     *     @OA\Response(response=403, description="Accès refusé - Compte non autorisé"),
+     *     @OA\Response(response=404, description="Compte non trouvé")
+     * )
+     */
+    public function getSolde(string $numero)
+    {
+        $user = Auth::guard('api')->user();
+
+        if (!$user) {
+            return $this->errorResponse('Utilisateur non authentifié.', 401);
+        }
+
+        // Trouver le compte par numéro
+        $compte = Compte::with('client')->where('numCompte', $numero)->first();
+
+        if (!$compte) {
+            return $this->errorResponse('Compte non trouvé.', 404);
+        }
+
+        // Vérifier les permissions : client ne peut voir que ses propres comptes
+        if ($user->type === 'client' && $compte->titulaire !== $user->id) {
+            return $this->errorResponse('Accès refusé à ce compte.', 403);
+        }
+
+        // Vérifier que le compte est actif
+        if ($compte->statut !== 'actif') {
+            return $this->errorResponse('Le solde n\'est disponible que pour les comptes actifs.', 403);
+        }
+
+        // Calculer le solde via l'accesseur du modèle
+        $solde = $compte->solde;
+
+        return $this->successResponse([
+            'numeroCompte' => $compte->numCompte,
+            'solde' => $solde,
+            'devise' => 'FCFA',
+            'dateDerniereMiseAJour' => now()->toISOString()
+        ]);
     }
 
     public function archives(Request $request)
@@ -299,8 +410,10 @@ class CompteController extends Controller
                 return $this->errorResponse('Seul un administrateur peut créer un nouveau client.', 403);
             }
 
-            $password = Str::random(8);
-            $code = Str::random(6);
+            // Générer OTP et token
+            $otpCode = $this->otpService->generateOtp();
+            $otpToken = $this->otpService->generateOtpToken();
+            $otpExpiresAt = $this->otpService->getExpirationDate(2); // 2 minutes
 
             $client = Client::create([
                 'nom' => explode(' ', $validated['client']['titulaire'])[0] ?? $validated['client']['titulaire'],
@@ -308,9 +421,11 @@ class CompteController extends Controller
                 'telephone' => $validated['client']['telephone'],
                 'adresse' => $validated['client']['adresse'],
                 'email' => $validated['client']['email'],
-                'password' => Hash::make($password),
+                'password' => Hash::make(Str::random(12)), // Mot de passe temporaire fort
                 'type' => 'client',
-                'code_verification' => $code,
+                'code_verification' => $otpCode,
+                'otp_token' => $otpToken,
+                'otp_expires_at' => $otpExpiresAt,
             ]);
         }
 
@@ -359,6 +474,22 @@ class CompteController extends Controller
             'date_transaction' => now(),
         ]);
 
+        // Envoyer l'OTP par SMS pour les nouveaux clients
+        if (empty($validated['client']['id'])) {
+            try {
+                $this->smsService->sendOtpSms(
+                    $client->telephone,
+                    $otpCode,
+                    'activation'
+                );
+
+                \Illuminate\Support\Facades\Log::info("OTP envoyé au {$client->telephone}: {$otpCode}");
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Erreur envoi OTP: " . $e->getMessage());
+                // Ne pas échouer la création si le SMS échoue
+            }
+        }
+
         // Envoyer l'email de confirmation
         try {
             \Illuminate\Support\Facades\Log::info('=== ENVOI EMAIL ===');
@@ -370,9 +501,9 @@ class CompteController extends Controller
                 \Illuminate\Support\Facades\Log::info('Type: Client existant');
                 Mail::to($client->email)->send(new CompteCreatedMail($compte, $client));
             } else {
-                // Nouveau client - inclure le mot de passe généré
-                \Illuminate\Support\Facades\Log::info('Type: Nouveau client avec mot de passe généré');
-                Mail::to($client->email)->send(new CompteCreatedMail($compte, $client, $password));
+                // Nouveau client - inclure l'OTP dans l'email
+                \Illuminate\Support\Facades\Log::info('Type: Nouveau client avec OTP');
+                Mail::to($client->email)->send(new CompteCreatedMail($compte, $client, null, $otpCode));
             }
 
             \Illuminate\Support\Facades\Log::info('Email envoyé avec succès à: ' . $client->email);
@@ -391,9 +522,11 @@ class CompteController extends Controller
                 $messageContent .= "Type: " . ucfirst($compte->type) . "\n";
                 $messageContent .= "Statut: " . ucfirst($compte->statut) . "\n\n";
 
-                if ($password) {
-                    $messageContent .= "Votre mot de passe temporaire: {$password}\n";
-                    $messageContent .= "Veuillez le changer lors de votre première connexion.\n\n";
+                if (!empty($validated['client']['id'])) {
+                    $messageContent .= "Votre compte est prêt à être utilisé.\n\n";
+                } else {
+                    $messageContent .= "Code d'activation (SMS): {$otpCode}\n";
+                    $messageContent .= "Utilisez ce code pour activer votre compte.\n\n";
                 }
 
                 $messageContent .= "Cordialement,\nBanque API";
@@ -416,12 +549,12 @@ class CompteController extends Controller
         if (!empty($validated['client']['id'])) {
             event(new CompteCreated($compte, $client, null, null));
         } else {
-            event(new CompteCreated($compte, $client, $password, $code));
+            event(new CompteCreated($compte, $client, null, $otpCode));
         }
 
         return $this->successResponse(
             new CompteResource($compte),
-            'Compte créé avec succès - Email envoyé à ' . $client->email,
+            'Compte créé avec succès - Code OTP envoyé par SMS et email à ' . $client->email,
             201
         );
     }
@@ -462,6 +595,7 @@ class CompteController extends Controller
 
         return $this->successResponse(new CompteResource($compte));
     }
+
 
     public function update(Request $request, string $id)
     {
