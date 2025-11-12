@@ -73,10 +73,21 @@ class Compte extends Model
 
     public function getSoldeAttribute(): float
     {
-        // Calculer le solde basé sur les transactions
-        $depot = $this->transactions()->where('type', 'depot')->sum('montant');
-        $retrait = $this->transactions()->where('type', 'retrait')->sum('montant');
-        return $depot - $retrait;
+        // Calculer le solde basé sur toutes les transactions
+        $debits = $this->transactions()
+            ->whereIn('type', ['retrait', 'transfert', 'payement'])
+            ->sum('montant');
+
+        $credits = $this->transactions()
+            ->where('type', 'depot')
+            ->sum('montant');
+
+        // Ajouter les crédits provenant de comptes destination (transferts reçus)
+        $creditsFromDestination = \App\Models\Transaction::where('compte_destination_id', $this->id)
+            ->whereIn('type', ['transfert', 'payement'])
+            ->sum('montant');
+
+        return ($credits + $creditsFromDestination) - $debits;
     }
 
     /**

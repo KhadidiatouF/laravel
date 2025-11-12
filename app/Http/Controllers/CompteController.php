@@ -244,6 +244,9 @@ class CompteController extends Controller
         $perPage = $validated['limit'] ?? 10;
         $comptes = $query->paginate($perPage);
 
+        // Le solde sera calculé automatiquement via l'accesseur getSoldeAttribute() du modèle
+        // Pas besoin de transformation supplémentaire car l'accesseur est appelé automatiquement
+
         return $this->paginatedResponse($comptes, CompteResource::class);
     }
 
