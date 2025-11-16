@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Info(
- *     title="Banque API",
+ *     title="OmPay API",
  *     version="1.0.0",
  *     description="API de gestion bancaire avec authentification Passport"
  * )
@@ -31,25 +31,15 @@ class TestController extends Controller
      * @OA\Post(
      *     path="/api/login",
      *     summary="Authentification utilisateur",
-     *     description="Permet à un utilisateur (admin ou client) de se connecter avec son numéro de téléphone et d'obtenir un token d'accès",
+     *     description="Permet à un utilisateur (admin ou client) de se connecter avec son numéro de téléphone et son PIN",
      *     operationId="login",
      *     tags={"Authentification"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             oneOf={
-     *                 @OA\Schema(
-     *                     title="Connexion Admin",
-     *                     required={"telephone"},
-     *                     @OA\Property(property="telephone", type="string", example="+221771234567")
-     *                 ),
-     *                 @OA\Schema(
-     *                     title="Connexion Client",
-     *                     required={"telephone", "codeSms"},
-     *                     @OA\Property(property="telephone", type="string", example="+221771234567"),
-     *                     @OA\Property(property="codeSms", type="string", example="0AjbUW", description="Code de vérification SMS requis pour la première connexion")
-     *                 )
-     *             }
+     *             required={"telephone", "pin"},
+     *             @OA\Property(property="telephone", type="string", example="+221771234567"),
+     *             @OA\Property(property="pin", type="string", example="1234", description="Code PIN de l'utilisateur")
      *         )
      *     ),
      *     @OA\Response(
@@ -61,27 +51,19 @@ class TestController extends Controller
       *             @OA\Property(property="message", type="string", example="Connexion réussie"),
       *             @OA\Property(property="data", type="object",
       *                 @OA\Property(property="access_token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."),
+      *                 @OA\Property(property="refresh_token", type="string", example="refresh_token_example"),
       *                 @OA\Property(property="token_type", type="string", example="Bearer"),
       *                 @OA\Property(property="expires_in", type="integer", example=3600)
       *             )
       *         )
       *     ),
      *     @OA\Response(
-     *         response=400,
-     *         description="Code SMS requis pour la première connexion",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Code de vérification requis pour la première connexion")
-     *         )
-     *     ),
-     *     @OA\Response(
      *         response=401,
-     *         description="Numéro de téléphone introuvable ou code SMS invalide",
+     *         description="Numéro de téléphone introuvable ou PIN invalide",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Numéro de téléphone introuvable ou code SMS invalide")
+     *             @OA\Property(property="message", type="string", example="Numéro de téléphone introuvable ou PIN invalide")
      *         )
      *     ),
      *     @OA\Response(
@@ -104,10 +86,10 @@ class TestController extends Controller
 
             $request->validate([
                 'telephone' => 'required|string',
-                'codeSms' => 'nullable|string',
+                'pin' => 'required|string|size:4|regex:/^\d{4}$/',
             ]);
 
-            Log::info('Validation passée pour téléphone: ' . $request->telephone);
+            Log::info('Validation passée pour téléphone: ' . $request->telephone . ' avec PIN');
 
         // Essayer d'abord de trouver un admin
         try {
@@ -143,45 +125,25 @@ class TestController extends Controller
             ], 401);
         }
 
-        // Pour les clients, vérifier le code SMS lors de la première connexion
-        if ($user->type === 'client') {
-            // Si c'est la première connexion (pas encore de token créé)
-            try {
-                $existingTokens = DB::table('oauth_access_tokens')->where('user_id', $user->id)->count();
-            } catch (\Exception $e) {
-                Log::error('Erreur lors du comptage des tokens: ' . $e->getMessage());
-                $existingTokens = 0; // Par défaut, considérer qu'il n'y a pas de tokens
-            }
-
-            if ($existingTokens === 0) {
-                // Première connexion - code SMS requis
-                if (empty($request->codeSms)) {
-                    Log::warning('Code SMS manquant pour première connexion téléphone: ' . $request->telephone);
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Code de vérification requis pour la première connexion'
-                    ], 400);
-                }
-
-                // Vérification STRICTE : le code doit exister ET correspondre exactement
-                if (!$user->code_verification || trim($request->codeSms) !== trim($user->code_verification)) {
-                    Log::warning('Code SMS invalide - Téléphone: ' . $request->telephone .
-                               ', Code fourni: "' . $request->codeSms . '"' .
-                               ', Code attendu: "' . ($user->code_verification ?? 'NULL') . '"');
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Code de vérification invalide pour ce numéro de téléphone'
-                    ], 401);
-                }
-
-                // Marquer l'utilisateur comme vérifié (supprimer le code)
-                $user->update(['code_verification' => null]);
-                Log::info('Première connexion validée pour téléphone: ' . $request->telephone);
-            } else {
-                // Connexions suivantes - pas de vérification de code SMS
-                Log::info('Connexion existante autorisée pour téléphone: ' . $request->telephone);
-            }
+        // Vérifier le PIN
+        $pinValid = false;
+        if (str_starts_with($user->pin, '$2y$')) {
+            // PIN haché
+            $pinValid = Hash::check($request->pin, $user->pin);
+        } else {
+            // PIN en texte clair
+            $pinValid = $user->pin === $request->pin;
         }
+
+        if (!$pinValid) {
+            Log::warning('PIN invalide pour téléphone: ' . $request->telephone);
+            return response()->json([
+                'success' => false,
+                'message' => 'PIN invalide'
+            ], 401);
+        }
+
+        Log::info('Connexion autorisée pour téléphone: ' . $request->telephone);
 
         // Créer le token d'accès
         try {
@@ -253,6 +215,7 @@ class TestController extends Controller
                 'message' => 'Connexion réussie',
                 'data' => [
                     'access_token' => $token->accessToken,
+                    'refresh_token' => \Illuminate\Support\Str::random(64),
                     'token_type' => 'Bearer',
                     'expires_in' => 3600,
                 ]
@@ -301,6 +264,7 @@ class TestController extends Controller
             'message' => 'Connexion réussie',
             'data' => [
                 'access_token' => $token->accessToken,
+                'refresh_token' => \Illuminate\Support\Str::random(64),
                 'token_type' => 'Bearer',
                 'expires_in' => 3600, // 1 heure
             ]

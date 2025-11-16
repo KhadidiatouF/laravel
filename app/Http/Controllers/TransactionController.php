@@ -390,6 +390,7 @@ class TransactionController extends Controller
                             'prenom' => $validated['code_marchand'],
                             'email' => $validated['code_marchand'] . '@marchand.local',
                             'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                            'pin' => '0000',
                             'type' => 'client'
                         ]
                     );

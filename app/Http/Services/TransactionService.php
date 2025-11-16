@@ -55,10 +55,11 @@ class TransactionService
                 'date_transaction' => now(),
             ]);
 
-            // Créer la transaction miroir pour les transferts
+            // Créer la transaction miroir pour les transferts et paiements uniquement
             if (in_array($data['type'], ['transfert', 'payement'])) {
                 $this->createMirrorTransaction($transaction, $data);
             }
+            // Pour les retraits, pas de transaction miroir (juste un débit)
 
             DB::commit();
 
@@ -243,6 +244,9 @@ class TransactionService
                 throw new \Exception('Le compte destination doit être actif.', 400);
             }
         }
+
+        // Pour les retraits, pas de compte destination requis
+        // Le retrait ne fait que débiter le compte source
     }
 
     private function checkSufficientBalance(string $compteId, float $montant): void

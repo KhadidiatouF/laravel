@@ -7,15 +7,9 @@ class Client extends User
 {
     protected $table = 'users';
 
-    // protected static function booted()
-    // {
-    //     static::addGlobalScope('client', function ($query) {
-    //         $query->where('type', 'client');
-    //     });
-    // }
 
     public function comptes() {
-        return $this->hasMany(Compte::class, 'titulaire'); // la FK vers users.id
+        return $this->hasMany(Compte::class, 'titulaire'); 
     }
 
       protected static function booted()
@@ -27,8 +21,5 @@ class Client extends User
         });
     }
 
-    public function user(){
-        return $this->belongsTo(User::class);
-    }
 
 }

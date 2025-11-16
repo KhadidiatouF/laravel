@@ -18,7 +18,8 @@ class DatabaseSeeder extends Seeder
             CompteSeeder::class,
             TransactionSeeder::class,
             AdminSeeder::class,
-            UserSeeder::class
+            UserSeeder::class,
+            MarchandSeeder::class
         ]);
     }
 

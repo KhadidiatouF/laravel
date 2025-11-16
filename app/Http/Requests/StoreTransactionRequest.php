@@ -20,6 +20,19 @@ class StoreTransactionRequest extends FormRequest
             'description' => 'nullable|string|max:255',
         ];
 
+        // Pour les retraits, pas besoin de compte destination
+        if ($this->input('type') === 'retrait') {
+            // Pas de validation supplémentaire pour les retraits
+        } elseif (in_array($this->input('type'), ['transfert', 'payement'])) {
+            if ($this->input('type') === 'transfert') {
+                $rules['numero_destinataire'] = 'required|string';
+            } elseif ($this->input('type') === 'payement') {
+                // Pour les paiements : soit numero_destinataire soit code_marchand
+                $rules['numero_destinataire'] = 'nullable|string';
+                $rules['code_marchand'] = 'nullable|string';
+            }
+        }
+
         // Validation conditionnelle selon le type de transaction
         if (in_array($this->input('type'), ['transfert', 'payement'])) {
             if ($this->input('type') === 'transfert') {

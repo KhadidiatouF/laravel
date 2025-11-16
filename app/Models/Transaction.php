@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
  *     description="Objet représentant une transaction bancaire",
  *     @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
  *     @OA\Property(property="numeroTransaction", type="string", example="TXN-20251102-ABCD"),
- *     @OA\Property(property="type", type="string", enum={"depot", "retrait", "transfert", "virement"}, example="depot"),
+ *     @OA\Property(property="type", type="string", enum={"depot", "retrait", "transfert", "payement"}, example="depot"),
  *     @OA\Property(property="montant", type="number", format="float", example=50000),
  *     @OA\Property(property="description", type="string", nullable=true, example="Dépôt d'espèces"),
  *     @OA\Property(property="statut", type="string", enum={"en_cours", "validee", "rejete", "annule"}, example="validee"),
@@ -94,7 +94,7 @@ class Transaction extends Model
     // Helper methods
     public function isDebit()
     {
-        return in_array($this->type, ['retrait', 'transfert', 'virement']);
+        return in_array($this->type, ['retrait', 'transfert', 'payement']);
     }
 
     public function isCredit()

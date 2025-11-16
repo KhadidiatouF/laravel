@@ -2,29 +2,26 @@
 
 namespace App\Mail;
 
-use App\Models\Transaction;
-use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class TransactionNotificationMail extends Mailable
+class OtpEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $transaction;
     public $client;
+    public $otpCode;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Transaction $transaction, User $client)
+    public function __construct($client, $otpCode)
     {
-        $this->transaction = $transaction;
         $this->client = $client;
+        $this->otpCode = $otpCode;
     }
 
     /**
@@ -33,7 +30,7 @@ class TransactionNotificationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Notification de transaction - ' . ucfirst($this->transaction->type) . ' - OmPay API',
+            subject: 'Votre code OTP - Banque JAMILA',
         );
     }
 
@@ -43,10 +40,10 @@ class TransactionNotificationMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.transaction-notification',
+            view: 'emails.otp',
             with: [
-                'transaction' => $this->transaction,
                 'client' => $this->client,
+                'otpCode' => $this->otpCode,
             ],
         );
     }

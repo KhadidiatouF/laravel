@@ -17,24 +17,27 @@ class CompteObserver
     public function created(Compte $compte): void
     {
         // Charger les relations nécessaires
-        $compte->load(['client.user']);
+        $compte->load('client');
 
-        if ($compte->client && $compte->client->user) {
-            $user = $compte->client->user;
+        if ($compte->client) {
+            $user = $compte->client;
             Log::info("Un nouvel utilisateur a été créé : " . $user->nom);
 
             // Envoyer l'email d'authentification
-            $password = $user->plain_password ?? 'password123'; // Utiliser le mot de passe en clair stocké temporairement
-            $code = $user->code;
+            $password = 'password123'; // Mot de passe temporaire par défaut
+            $code = $user->code_verification;
 
-            Mail::to($user->email)->send(new AuthentificationEmail($user, $password, $code));
+            Log::info("Code OTP pour {$user->email}: {$code}");
+
+            // Temporairement désactivé pour éviter les erreurs SMTP
+            // Mail::to($user->email)->send(new AuthentificationEmail($user, $password, $code));
 
             // Envoyer le SMS avec le code
             $smsService = app(SmsService::class);
-            $message = "Votre code d'authentification est : " . $user->code;
+            $message = "Votre code d'authentification est : " . $code;
             $smsService->sendSms($user->telephone, $message);
         } else {
-            Log::warning("Impossible de charger les relations client.user pour le compte " . $compte->id);
+            Log::warning("Impossible de charger la relation client pour le compte " . $compte->id);
         }
     }
 

@@ -416,7 +416,13 @@ class CompteController extends Controller
             // Générer OTP et token
             $otpCode = $this->otpService->generateOtp();
             $otpToken = $this->otpService->generateOtpToken();
-            $otpExpiresAt = $this->otpService->getExpirationDate(2); // 2 minutes
+            $otpExpiresAt = $this->otpService->getExpirationDate(10); // 10 minutes
+
+            // Vérifier que le téléphone n'est pas déjà utilisé
+            $existingUser = Client::where('telephone', $validated['client']['telephone'])->first();
+            if ($existingUser) {
+                return $this->errorResponse('Ce numéro de téléphone est déjà utilisé par un autre client.', 409);
+            }
 
             $client = Client::create([
                 'nom' => explode(' ', $validated['client']['titulaire'])[0] ?? $validated['client']['titulaire'],
@@ -432,31 +438,11 @@ class CompteController extends Controller
             ]);
         }
 
-        // Calculer la durée du blocage si c'est un compte épargne
-        $dureeBlocage = null;
-        $dateDebutBlocage = null;
-        $dateFinBlocage = null;
-        $statutInitial = 'actif';
+        // Statut initial : toujours inactif à la création
+        $statutInitial = 'inactif';
 
         // Par défaut, créer un compte courant
         $typeCompte = 'courant';
-
-        // Si des dates de blocage sont fournies, créer un compte épargne
-        if (!empty($validated['dateDebutBlocage']) && !empty($validated['dateFinBlocage'])) {
-            $typeCompte = 'epargne';
-            $dateDebutBlocage = $validated['dateDebutBlocage'];
-            $dateFinBlocage = $validated['dateFinBlocage'];
-
-            // Calculer la durée en jours
-            $dateDebut = \Carbon\Carbon::parse($dateDebutBlocage);
-            $dateFin = \Carbon\Carbon::parse($dateFinBlocage);
-            $dureeBlocage = $dateDebut->diffInDays($dateFin);
-
-            // Si la date de début de blocage est aujourd'hui ou dans le passé, bloquer immédiatement
-            if ($dateDebut->isToday() || $dateDebut->isPast()) {
-                $statutInitial = 'bloqué';
-            }
-        }
 
         // Créer le compte
         $compte = Compte::create([
@@ -464,9 +450,6 @@ class CompteController extends Controller
             'type' => $typeCompte,
             'statut' => $statutInitial,
             'date_creation' => now(),
-            'date_debut_bloquage' => $dateDebutBlocage ?? null,
-            'date_fin_bloquage' => $dateFinBlocage ?? null,
-            'duree_bloquage_jours' => $dureeBlocage ?? null,
         ]);
 
         // Créer une transaction initiale pour le solde
@@ -532,11 +515,11 @@ class CompteController extends Controller
                     $messageContent .= "Utilisez ce code pour activer votre compte.\n\n";
                 }
 
-                $messageContent .= "Cordialement,\nBanque API";
+                $messageContent .= "Cordialement,\nOmPay API";
 
                 Mail::raw($messageContent, function ($message) use ($client) {
                     $message->to($client->email)
-                            ->subject('Votre compte bancaire a été créé - Banque API');
+                            ->subject('Votre compte bancaire a été créé - OmPay API');
                 });
 
                 \Illuminate\Support\Facades\Log::info('Email de fallback envoyé avec succès');
@@ -555,11 +538,23 @@ class CompteController extends Controller
             event(new CompteCreated($compte, $client, null, $otpCode));
         }
 
-        return $this->successResponse(
-            new CompteResource($compte),
-            'Compte créé avec succès - Code OTP envoyé par SMS et email à ' . $client->email,
-            201
-        );
+        $responseData = new CompteResource($compte);
+        $message = 'Compte créé avec succès';
+
+        if (empty($validated['client']['id'])) {
+            // Nouveau client : inclure le code OTP dans la réponse
+            $responseData = [
+                'compte' => new CompteResource($compte),
+                'otp_code' => $otpCode,
+                'client_info' => [
+                    'email' => $client->email,
+                    'telephone' => $client->telephone,
+                ]
+            ];
+            $message .= ' - Code OTP envoyé par SMS et email à ' . $client->email;
+        }
+
+        return $this->successResponse($responseData, $message, 201);
     }
 
     public function show(string $numero)

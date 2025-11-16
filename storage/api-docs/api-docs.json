@@ -1,7 +1,7 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "Banque API",
+        "title": "OmPay API",
         "description": "API de gestion bancaire avec authentification Passport",
         "version": "1.0.0"
     },
@@ -16,14 +16,14 @@
         }
     ],
     "paths": {
-        "/api/verify-otp": {
+        "/api/v1/verify-otp": {
             "post": {
                 "tags": [
                     "Activation"
                 ],
                 "summary": "Vérifier le code OTP et activer le compte",
                 "description": "Vérifier et activer un compte avec OTP",
-                "operationId": "28d4162d4240a71f0d6d939b7e6f7be2",
+                "operationId": "b0e58c338829036fd635253a3c78b3bf",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -31,8 +31,7 @@
                             "schema": {
                                 "required": [
                                     "telephone",
-                                    "otp_code",
-                                    "otp_token"
+                                    "otp_code"
                                 ],
                                 "properties": {
                                     "telephone": {
@@ -42,10 +41,6 @@
                                     "otp_code": {
                                         "type": "string",
                                         "example": "123456"
-                                    },
-                                    "otp_token": {
-                                        "type": "string",
-                                        "example": "random_token_here"
                                     }
                                 },
                                 "type": "object"
@@ -55,7 +50,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Compte activé avec succès",
+                        "description": "Compte activé avec succès et connexion automatique",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -66,7 +61,24 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Compte activé avec succès"
+                                            "example": "Compte activé avec succès. Connexion automatique effectuée."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -89,26 +101,26 @@
                 }
             }
         },
-        "/api/resend-otp": {
+        "/api/v1/resend-otp": {
             "post": {
                 "tags": [
                     "Activation"
                 ],
                 "summary": "Renvoyer un code OTP",
                 "description": "Renvoyer un nouveau code OTP",
-                "operationId": "65c54a1725154a2da81dcf02c7c7cd03",
+                "operationId": "e94eb19a534e3f767b06ecc9b47dc2bb",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "telephone"
+                                    "email"
                                 ],
                                 "properties": {
-                                    "telephone": {
+                                    "email": {
                                         "type": "string",
-                                        "example": "+221771234567"
+                                        "example": "client@example.com"
                                     }
                                 },
                                 "type": "object"
@@ -138,6 +150,273 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/modifier-mdp": {
+            "post": {
+                "tags": [
+                    "Activation"
+                ],
+                "summary": "Modifier le mot de passe PIN",
+                "description": "Modifier le mot de passe PIN",
+                "operationId": "d2a3c7d27eeefbbfbc84c799dc9242c4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ancien_pin",
+                                    "nouveau_pin"
+                                ],
+                                "properties": {
+                                    "ancien_pin": {
+                                        "type": "string",
+                                        "example": "0000"
+                                    },
+                                    "nouveau_pin": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe modifié avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mot de passe modifié avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides"
+                    },
+                    "401": {
+                        "description": "Ancien PIN incorrect"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Informations de l'utilisateur connecté",
+                "description": "Récupérer les informations de l'utilisateur connecté avec son compte et ses transactions",
+                "operationId": "1e5f382ba4fa0960d233875cab75a361",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de page pour les transactions",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre de transactions par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer les transactions par type",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "depot",
+                                "retrait",
+                                "transfert",
+                                "payement"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "description": "Filtrer les transactions par statut",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "en_cours",
+                                "validee",
+                                "rejete",
+                                "annule"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "description": "Date de début (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "description": "Date de fin (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Trier par champ",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "date_transaction",
+                            "enum": [
+                                "date_transaction",
+                                "montant",
+                                "type"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Ordre de tri",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "desc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Informations de l'utilisateur récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "format": "uuid"
+                                                        },
+                                                        "nom": {
+                                                            "type": "string"
+                                                        },
+                                                        "prenom": {
+                                                            "type": "string"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "compte": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "format": "uuid"
+                                                        },
+                                                        "numeroCompte": {
+                                                            "type": "string"
+                                                        },
+                                                        "solde": {
+                                                            "type": "number",
+                                                            "format": "float"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "transactions": {
+                                                    "properties": {
+                                                        "data": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/Transaction"
+                                                            }
+                                                        },
+                                                        "pagination": {
+                                                            "$ref": "#/components/schemas/TransactionPagination"
+                                                        },
+                                                        "links": {
+                                                            "$ref": "#/components/schemas/TransactionLinks"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    },
+                    "404": {
+                        "description": "Utilisateur ou compte non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/comptes": {
@@ -631,47 +910,29 @@
                     "Authentification"
                 ],
                 "summary": "Authentification utilisateur",
-                "description": "Permet à un utilisateur (admin ou client) de se connecter avec son numéro de téléphone et d'obtenir un token d'accès",
+                "description": "Permet à un utilisateur (admin ou client) de se connecter avec son numéro de téléphone et son PIN",
                 "operationId": "login",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "oneOf": [
-                                    {
-                                        "title": "Connexion Admin",
-                                        "required": [
-                                            "telephone"
-                                        ],
-                                        "properties": {
-                                            "telephone": {
-                                                "type": "string",
-                                                "example": "+221771234567"
-                                            }
-                                        },
-                                        "type": "object"
+                                "required": [
+                                    "telephone",
+                                    "pin"
+                                ],
+                                "properties": {
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "+221771234567"
                                     },
-                                    {
-                                        "title": "Connexion Client",
-                                        "required": [
-                                            "telephone",
-                                            "codeSms"
-                                        ],
-                                        "properties": {
-                                            "telephone": {
-                                                "type": "string",
-                                                "example": "+221771234567"
-                                            },
-                                            "codeSms": {
-                                                "description": "Code de vérification SMS requis pour la première connexion",
-                                                "type": "string",
-                                                "example": "0AjbUW"
-                                            }
-                                        },
-                                        "type": "object"
+                                    "pin": {
+                                        "description": "Code PIN de l'utilisateur",
+                                        "type": "string",
+                                        "example": "1234"
                                     }
-                                ]
+                                },
+                                "type": "object"
                             }
                         }
                     }
@@ -697,6 +958,10 @@
                                                     "type": "string",
                                                     "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
                                                 },
+                                                "refresh_token": {
+                                                    "type": "string",
+                                                    "example": "refresh_token_example"
+                                                },
                                                 "token_type": {
                                                     "type": "string",
                                                     "example": "Bearer"
@@ -714,28 +979,8 @@
                             }
                         }
                     },
-                    "400": {
-                        "description": "Code SMS requis pour la première connexion",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Code de vérification requis pour la première connexion"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
                     "401": {
-                        "description": "Numéro de téléphone introuvable ou code SMS invalide",
+                        "description": "Numéro de téléphone introuvable ou PIN invalide",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -746,7 +991,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Numéro de téléphone introuvable ou code SMS invalide"
+                                            "example": "Numéro de téléphone introuvable ou PIN invalide"
                                         }
                                     },
                                     "type": "object"
@@ -1679,7 +1924,7 @@
                             "depot",
                             "retrait",
                             "transfert",
-                            "virement"
+                            "payement"
                         ],
                         "example": "depot"
                     },
@@ -1766,12 +2011,12 @@
             "description": "Endpoints d'activation de comptes clients"
         },
         {
-            "name": "Comptes",
-            "description": "Comptes"
+            "name": "Authentification",
+            "description": "Endpoints d'authentification"
         },
         {
-            "name": "Authentification",
-            "description": "Authentification"
+            "name": "Comptes",
+            "description": "Comptes"
         },
         {
             "name": "Transactions",

@@ -15,7 +15,7 @@ class ClientSeeder extends Seeder
         \App\Models\Client::create([
             'nom' => 'Client',
             'prenom' => 'Test',
-            'email' => 'client@example.com',
+            'email' => 'jamiral2019@gmail.com',
             'telephone' => '+221773334567',
             'adresse' => 'Dakar, Sénégal',
             'password' => \Illuminate\Support\Facades\Hash::make('password'),

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notification de Transaction - Banque API</title>
+    <title>Notification de Transaction - OmPay API</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -78,7 +78,7 @@
     <div class="container">
         <div class="header">
             <h1>🔔 Notification de Transaction</h1>
-            <p>Banque API - Service de notification automatique</p>
+            <p>OmPay API - Service de notification automatique</p>
         </div>
 
         <p>Bonjour <strong>{{ $client->prenom }} {{ $client->nom }}</strong>,</p>
@@ -140,7 +140,7 @@
         <div class="footer">
             <p>
                 Cordialement,<br>
-                <strong>L'équipe Banque API</strong><br>
+                <strong>L'équipe OmPay API</strong><br>
                 Service de notification automatique<br>
                 Email : support@banque-api.com<br>
                 Téléphone : +221 33 123 45 67

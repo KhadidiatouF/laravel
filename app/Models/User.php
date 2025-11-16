@@ -29,6 +29,7 @@ class User extends Authenticatable
         'telephone',
         'adresse',
         'password',
+        'pin',
         'type',
         'code_verification',
         'otp_token',
@@ -45,6 +46,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'pin' => 'hashed',
     ];
 
    
@@ -61,7 +63,12 @@ class User extends Authenticatable
     }
 
     public function client(){
-        return $this->hasOne(Client::class);
+        return $this->hasOne(Client::class, 'id', 'id');
+    }
+
+
+    public function marchand(){
+        return $this->hasOne(marchand::class);
     }
 
 

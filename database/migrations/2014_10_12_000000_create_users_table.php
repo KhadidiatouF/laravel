@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->string('prenom');
             $table->string('telephone')->nullable();
             $table->string('adresse')->nullable();
-            $table->enum('type', ['admin', 'client'])->default('client');
+            $table->enum('type', ['admin', 'client', 'marchand'])->default('client');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

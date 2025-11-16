@@ -26,7 +26,7 @@ class Compte extends Model
 
     public function client()
     {
-        return $this->belongsTo(Client::class, 'titulaire');
+        return $this->belongsTo(User::class, 'titulaire');
     }
 
     public function transactions()
@@ -48,13 +48,11 @@ class Compte extends Model
         });
     }
 
-    // Scope local pour récupérer un compte par numéro
     public function scopeNumero(Builder $query, string $numero): Builder
     {
         return $query->where('numCompte', $numero);
     }
 
-    // Scope local pour récupérer les comptes d'un client basé sur le téléphone
     public function scopeClient(Builder $query, string $telephone): Builder
     {
         return $query->whereHas('client', function (Builder $q) use ($telephone) {
@@ -73,7 +71,6 @@ class Compte extends Model
 
     public function getSoldeAttribute(): float
     {
-        // Calculer le solde basé sur toutes les transactions
         $debits = $this->transactions()
             ->whereIn('type', ['retrait', 'transfert', 'payement'])
             ->sum('montant');
@@ -95,22 +92,18 @@ class Compte extends Model
      */
     public function setSoldeAttribute($value): void
     {
-        // Le solde est calculé automatiquement via les transactions
-        // Cette méthode est présente pour la complétude mais ne devrait pas être utilisée
+        
         throw new \InvalidArgumentException('Le solde ne peut pas être défini directement. Utilisez les transactions.');
     }
 
-    // Méthode pour vérifier si le compte est archivé
     public function isArchived(): bool
     {
         return $this->statut === 'fermé';
     }
 
-    // Méthode pour récupérer les comptes archivés depuis le cloud
     public static function getArchivedFromCloud(int $perPage = 10)
     {
-        // Simulation d'appel à un service cloud
-        // En production, cela ferait un appel HTTP vers un service externe
+      
         return static::onlyTrashed()
             ->with('client')
             ->paginate($perPage);

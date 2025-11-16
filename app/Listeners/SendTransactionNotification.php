@@ -61,11 +61,11 @@ class SendTransactionNotification
                     $messageContent .= "- Description : " . $transaction->description . "\n\n";
                 }
 
-                $messageContent .= "Cordialement,\nBanque API";
+                $messageContent .= "Cordialement,\nOmPay API";
 
                 Mail::raw($messageContent, function ($message) use ($client, $transaction) {
                     $message->to($client->email)
-                            ->subject('Notification de transaction - ' . ucfirst($transaction->type) . ' - Banque API');
+                            ->subject('Notification de transaction - ' . ucfirst($transaction->type) . ' - OmPay API');
                 });
 
                 Log::info('Email de notification de fallback envoyé avec succès');

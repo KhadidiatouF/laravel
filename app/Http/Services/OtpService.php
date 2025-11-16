@@ -24,9 +24,9 @@ class OtpService
     }
 
     /**
-     * Calculer la date d'expiration (2 minutes par défaut)
+     * Calculer la date d'expiration (10 minutes par défaut)
      */
-    public function getExpirationDate(int $minutes = 2): Carbon
+    public function getExpirationDate(int $minutes = 10): Carbon
     {
         return now()->addMinutes($minutes);
     }

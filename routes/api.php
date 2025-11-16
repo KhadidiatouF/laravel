@@ -6,6 +6,7 @@ use App\Http\Controllers\CompteController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\ActivationController;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,15 +30,15 @@ Route::get('/api/documentation', function () {
 
 Route::post('/login', [TestController::class, 'login']);
 
-Route::post('/verify-otp', [ActivationController::class, 'verifyOtp']);
-Route::post('/resend-otp', [ActivationController::class, 'resendOtp']);
-
 
 // Route de diagnostic
 Route::get('/diagnostic', [TestController::class, 'diagnostic']);
 
 // API Version 1
 Route::prefix('v1')->middleware(['auth:api'])->group(function () {
+    // Route pour les informations de l'utilisateur connecté
+    Route::get('auth/me', [AuthController::class, 'me']);
+
     // Routes pour les comptes
     Route::get('comptes', [CompteController::class, 'index']);
     Route::post('comptes', [CompteController::class, 'store'])->middleware('logging');
@@ -56,4 +57,8 @@ Route::prefix('v1')->group(function () {
     Route::get('test', function () {
         return response()->json(['message' => 'API v1 fonctionne', 'timestamp' => now()]);
     });
+
+    Route::post('/verify-otp', [ActivationController::class, 'verifyOtp']);
+    Route::post('/resend-otp', [ActivationController::class, 'resendOtp']);
+    Route::post('/modifier-mdp', [ActivationController::class, 'modifierMdp'])->middleware('auth:api');
 });
